@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<JMF xmlns="http://www.CIP4.org/JDFSchema_1_1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" MaxVersion="1.5" SenderID="Python by hdok" TimeStamp="2020-08-30T11:39:00+02:00" Version="1.5" xsi:type="JMFRootMessage">
+      <Query ID="Completed-12345" Type="QueueStatus" xsi:type="QueryQueueStatus">
+        <QueueFilter StatusList="STATUS"/>
+    </Query>
+</JMF>
