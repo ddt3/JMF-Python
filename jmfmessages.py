@@ -256,7 +256,7 @@ def SendJob(url,pdfurl):
   """
   # First the mime package for submission is created
   
-  mime_file=CreateMimePackage("jmfjdf/SubmitQueueEntry.jmf","jmfjdf/job1.jdf",pdfurl)
+  mime_file=CreateMimePackage("jmfjdf/SubmitQueueEntry.jmf","jmfjdf/Template.jdf",pdfurl)
   with open(mime_file,'r') as datafile:
     headers={'Content-Type': 'multipart/related'}
     try:

@@ -1,3 +1,6 @@
 import jmfmessages
 import config
-print(jmfmessages.RemoveQueueEntries(config.url, config.status), "QueueEntries have been removed")
+
+printer="http://PRISMAsync.cpp.canon:8010"
+
+print(jmfmessages.RemoveQueueEntries(printer, "Aborted"), "QueueEntries have been removed")
