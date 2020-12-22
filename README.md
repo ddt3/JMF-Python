@@ -1,10 +1,10 @@
 # Python Examples
 ## Introduction
-These examples are created using Python3. Python is available for a lot of platforms including Windows. A version of Python can be downloaded here: https://www.python.org/downloads/  
-Note that these examples have been created using Python3
+These files have been created to serve as examples of how JMF/JDF can be used to manage jobs on PRISMAsync. Because of that these files are provided "as is". This means that e.g. performance, error handling, input validation have not been a priority.  The examples have been written in Python because of the readability and availability of this language. Note that these examples have been created for Python3
 
 ## Installation
-Run the downloaded Python installer and make sure to check "Add Python 3.x to PATH" 
+A version of Python can be downloaded here: https://www.python.org/downloads/   
+For Windows: Run the downloaded Python installer and make sure to check "Add Python 3.x to PATH" 
 
 ## Configuration
 Some Python libraries need to be installed before you can use these examples. To install the needed linraries, run:

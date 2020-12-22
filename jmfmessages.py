@@ -125,25 +125,32 @@ def RemoveQueueEntries (url, status):
     int:Number of removed queueentries
 
   """
+  # First request QueueEntryIDs having a specific state
   queue_ids=ReturnQueueEntries(url,status)
   nrjobs=len(queue_ids)
   if nrjobs:  
     to_delete=""
+    # Add a line mentioning the QueueEntryID for each found QueueEntryID
     for i in range(nrjobs):
       to_delete+="<QueueEntryDef QueueEntryID=\""+queue_ids[i]+"\" />\n"
 
+    # Read a  template RemoveQueueEntry jmf message 
     jmf_message=read_jmfjdf('jmfjdf/RemoveQueueEntry.jmf') 
+    # In this template replace QueueEntryID line with the QueueEntryIDs to_delete
     jmf_message=jmf_message.replace("<QueueEntryDef QueueEntryID=\"QUEUEENTRY\" />",to_delete)
     headers={'Content-Type': 'multipart/related'}
+    # Wrap jmf message in mime
     deletemessage=mimeheader_jmf+jmf_message+mimefooter
     
     try:
+      # Send delete message to PRISMAsync and wait for response
       delresponse =  requests.post(url=url,data=deletemessage, headers=headers)
       root = xml.dom.minidom.parseString(delresponse.content)
     except:
       print("Unexpected reply from", url)
       print(sys.exc_info()[0], "occurred.")
       return 0
+    # WHY?
     entries=root.getElementsByTagName("Comment")
     if  entries:
       for qid in entries:
@@ -167,12 +174,12 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
   encoded_filename="EN-"+str(uuid.uuid4())
 
   # First determine if PDF needs to be included in mime of referenced by url 
+  # If it needs to be included in mime: encode the PDF in base64 format
   sendmime="file://" in pdf_url
   pdf_file=str(pdf_url).replace("file://","")
   if sendmime:
-    #PDF needs to be read from disk
+    #PDF needs to be read from disk using filename provided
     try:
-      print ("Filename:", pdf_file) 
       with open(pdf_file, "rb") as source, open(encoded_filename, "wb") as target:
           # Create base64 encoded file from PDF
           with Base64IO(target) as encoded_target:
@@ -184,13 +191,9 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
 
   else:
     pass
-    #PDF file can be found on a website
+    #PDF file is referred to using https, no additional actions needed
 
-  # Create complete mime package in 2 parts (without base64 PDF) or 3 parts (with base64 PDF)
-  
-  # Open mime pacakge file, using unique name to avoid conflict with other files
-  
-  # Make sure mime package filename does not exist
+  # Now create complete mime package in 2 parts (without base64 PDF) or 3 parts (with base64 PDF)
   time_string=time.strftime('%Y-%m-%d_%H-%M-%S')
   i=0  
   unique_filename = time_string+"_"+str(i)+".mjm"
@@ -205,7 +208,7 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
     # Add jmf file
     with open(jmf_file,'r') as tempfile:
       jmf_message=tempfile.read()
-      # Include regerence  JDF file in jmf message. Note that JDF is  part2 of this mime pacakge. 
+      # In this JMF message, include refrence to JDF file: JDF file is part2 of this mime pacakge. 
       jmf_message=re.sub("URL=\".*\"","URL=\"cid:part2@cpp.canon\"",jmf_message)
     outfile.write(jmf_message)
     
@@ -215,12 +218,13 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
     # Add jdf file
     with open(jdf_file, 'r') as tempfile:
       jdf_message=tempfile.read()
+      # In this JDF ticket, include refrence to PDF file: PDF file is either part3 of this mime pacakge or reference to using url. 
       if sendmime :
         jdf_message=re.sub("URL=\".*\"","URL=\"cid:part3@cpp.canon\"",jdf_message)
       else :
         jdf_message=re.sub("URL=\".*\"","URL=\""+pdf_url+"\"",jdf_message)
       
-      #Adding the current time to the JDF ticket ID and PARTID, to make job easier to find in PRISMAsync jmf logging.
+      #Adding the current time to the JDF ticket ID and PARTID, to make job easy to find in PRISMAsync jmf logging.
       jdf_message=jdf_message.replace("REPLACE_ID",time.asctime())
       jdf_message=jdf_message.replace("REPLACE_JOBPARTID",time.asctime())
     outfile.write(jdf_message)
@@ -250,18 +254,20 @@ def SendJob(url,pdfurl):
     id:QueueEntryID of submitted job
 
   """
-  # Because a PDF file can have a large size, the complete message is first created as a file on disk
+  # First the mime package for submission is created
   
   mime_file=CreateMimePackage("jmfjdf/SubmitQueueEntry.jmf","jmfjdf/job1.jdf",pdfurl)
   with open(mime_file,'r') as datafile:
     headers={'Content-Type': 'multipart/related'}
     try:
+      # Submit the mime message to PRISMAsync and wait for the response
       response=requests.post(url=url, data=datafile.read(), headers=headers)
       root = xml.dom.minidom.parseString(response.content)
     except:
       print("Unexpected reply from", url)
       print(sys.exc_info()[0], "occurred.")
       return 0
+    # When submission is successfull reply JMF will contain submitted queueentries, the latest QueueEntryID is the one just submitted, return this id.
     Entries=root.getElementsByTagName("QueueEntry")
     id_array=Entries[0].getAttribute("QueueEntryID")
   if id_array :
