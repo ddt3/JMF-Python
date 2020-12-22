@@ -1,5 +1,4 @@
 import jmfmessages
-import config
 
 printer="http://PRISMAsync.cpp.canon:8010"
 
