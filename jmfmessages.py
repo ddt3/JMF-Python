@@ -249,6 +249,7 @@ def SendJob(url,pdfurl):
 
     Parameters:
     url: full link to printer jmf interface e.g. http://prismasync.lan:8010
+    pdf: URL for PDF file to be send (either file: or http: URL )
 
     Returns:
     id:QueueEntryID of submitted job
