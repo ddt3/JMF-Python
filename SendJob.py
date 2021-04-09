@@ -12,3 +12,6 @@ from jmfmessages import SendJob
 print("Job was submitted and has QueueEntryID:",SendJob("http://PRISMAsync.cpp.canon:8010", "file://jmfjdf/Test.pdf"))
 # Submit a PDF file using a URL, template JDF & JMF are used
 print("Job was submitted and has QueueEntryID:",SendJob("http://PRISMAsync.cpp.canon:8010", "http://ubuntu-hdok.ocevenlo.oce.net/pdf/PosterFashionWomanplusTextSample.pdf"))
+# Submit a PDF file using a URL and provide a JDF, template JMF is used
+print("Job was submitted and has QueueEntryID:",SendJob("http://PRISMAsync.cpp.canon:8010", "file://jmfjdf/Test.pdf", "jmfjdf/Template.jdf" ))
+

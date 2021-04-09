@@ -10,7 +10,7 @@
         
         <Contact ContactTypes="Customer" Class="Parameter" ID="r190712202412.-001_000037" Status="Available"/>
         <LayoutElement Class="Parameter" ID="r190712202412.-001_000038" Status="Available">
-            <FileSpec URL="REPLACE_URL" />
+            <FileSpec URL="http://test/" />
         </LayoutElement>
         <RunList Class="Parameter" ID="r190712202412.-001_000039" Status="Available">
             <LayoutElementRef rRef="r190712202412.-001_000038" />

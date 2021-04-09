@@ -244,20 +244,26 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
   #outfile closed, return mime file name
   return unique_filename
 
-def SendJob(url,pdfurl):
-  """Sends a pre-defined job to the given url
+def SendJob(url,pdfurl, *jdf_file_param):
+  """Sends a job to the given url
 
     Parameters:
     url: full link to printer jmf interface e.g. http://prismasync.lan:8010
     pdf: URL for PDF file to be send (either file: or http: URL )
+    optional: path to JDF file, if this parameter is not provided , Template.jdf is used.
 
     Returns:
     id:QueueEntryID of submitted job
 
   """
   # First the mime package for submission is created
-  
-  mime_file=CreateMimePackage("jmfjdf/SubmitQueueEntry.jmf","jmfjdf/Template.jdf",pdfurl)
+  if jdf_file_param:
+    jdf_file=jdf_file_param[0]
+  else:
+    jdf_file="jmfjdf/Template.jdf"
+  print(jdf_file)
+  exit()
+  mime_file=CreateMimePackage("jmfjdf/SubmitQueueEntry.jmf",jdf_file,pdfurl)
   with open(mime_file,'r') as datafile:
     headers={'Content-Type': 'multipart/related'}
     try:

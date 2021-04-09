@@ -7,7 +7,7 @@ A version of Python can be downloaded here: https://www.python.org/downloads/
 For Windows: Run the downloaded Python installer and make sure to check "Add Python 3.x to PATH" 
 
 ### Configuration
-Some Python libraries need to be installed before you can use these examples. To install the needed linraries, run:
+Some Python packages need to be installed before you can use these examples. To install the needed pacakges, run:
 
 ```python -m pip install -r requirements.txt```
 
@@ -29,4 +29,7 @@ A detailed description of the jmfmessages module can be generated using python:
 It will generate the documentaiton based on the infromation in the module.
 
 ### Examples
-Example python files have been added that make use of the jmfmessages module. Before using examples: make sure to provide the correct printer url.
+Example python files have been added that make use of the jmfmessages module. 
+Before using these examples: 
+* Enable JMF support on PRISMAsync 
+* Make sure to replace the current printer url ( http://PRISMAsync.cpp.canon:8010) by the actual address of your PRISMAsync.
