@@ -1,5 +1,5 @@
-import jmfmessages
+from jmfjdf.jmfmessages import RemoveQueueEntries
 
 printer="http://PRISMAsync.cpp.canon:8010"
 
-print(jmfmessages.RemoveQueueEntries(printer, " "), "QueueEntries have been removed")
+print(RemoveQueueEntries(printer, " "), "QueueEntries have been removed")

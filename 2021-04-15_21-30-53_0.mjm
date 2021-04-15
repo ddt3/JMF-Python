@@ -1,0 +1,24 @@
+MIME-Version: 1.0
+Content-Type: multipart/related; boundary="I_Love_PRISMAsync"
+
+--I_Love_PRISMAsync
+Content-ID: part1@cpp.canon
+Content-Type: application/vnd.cip4-jmf+xml
+content-transfer-encoding:7bit 
+Content-Disposition: attachment
+
+<JMF TimeStamp="2020-06-19T12:09:38-07:00" Version="1.4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.CIP4.org/JDFSchema_1_1">
+    <Command ID="Submit-Job-PRISMAsync" Type="SubmitQueueEntry">
+        <QueueSubmissionParams URL="cid:part2@cpp.canon">
+            <QueueFilter QueueEntryDetails="None" MaxEntries="1" >
+            </QueueFilter>
+        </QueueSubmissionParams>
+    </Command>
+</JMF>
+
+--I_Love_PRISMAsync
+Content-ID: part2@cpp.canon 
+content-transfer-encoding:7bit 
+content-type: application/vnd.cip4-jdf+xml; charset="us-ascii" 
+content-disposition: attachment; filename="Ticket.jdf"
+

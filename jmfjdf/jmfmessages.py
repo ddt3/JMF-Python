@@ -11,15 +11,21 @@ import xml.dom.minidom
 import requests
 from base64io import Base64IO
 
+# a few files are needed as part 
+basepath=os.path.dirname(os.path.abspath(__file__))
+jmf_queue_msg=basepath + "\\QueueStatus.jmf"
+jmf_submit_msg=basepath + "\\SubmitQueueEntry.jmf"
+jdf_template=basepath + "\\Template.jdf"
+
 # This library contains contains examples of how jmf can be used to send command to PRISMAsync and obtain information from PRISMAsync
 # All jmf messages are send mime-encoded. Note that no libary is used for mime-encoding, messages are mime-encoded "by hand"
 
 
 # Mime header used for sending jmf
 mimeheader_jmf = """MIME-Version: 1.0
-Content-Type: multipart/related; boundary="ThisIsARandomString"
+Content-Type: multipart/related; boundary="I_Love_PRISMAsync"
 
---ThisIsARandomString
+--I_Love_PRISMAsync
 Content-ID: part1@cpp.canon
 Content-Type: application/vnd.cip4-jmf+xml
 content-transfer-encoding:7bit 
@@ -28,7 +34,7 @@ Content-Disposition: attachment
 """
 # Mime header used for sending jdf
 mimeheader_jdf = """
---ThisIsARandomString
+--I_Love_PRISMAsync
 Content-ID: part2@cpp.canon 
 content-transfer-encoding:7bit 
 content-type: application/vnd.cip4-jdf+xml; charset="us-ascii" 
@@ -37,7 +43,7 @@ content-disposition: attachment; filename="Ticket.jdf"
 """
 # Mime header used for sending pdf
 mimeheader_pdf = """
---ThisIsARandomString
+--I_Love_PRISMAsync
 Content-ID: part3@cpp.canon
 Content-Type: application/octet-stream; name=Job1.pdf
 Content-Transfer-Encoding: base64
@@ -47,7 +53,7 @@ Content-Disposition: attachment; filename=Job1.pdf
 
 # Mime Footer
 mimefooter = """
---ThisIsARandomString--"""
+--I_Love_PRISMAsync--"""
 
 
 def read_jmfjdf (message_file):
@@ -95,7 +101,7 @@ def ReturnQueueEntries (url, status):
   headers={'Content-Type': 'multipart/related'}
   # Create a jmf message to retrieve the queue status that Filters on job status, it is allowed to mention multiple job statuses   
   
-  jmf_message=read_jmfjdf("jmfjdf/QueueStatus.jmf")
+  jmf_message=read_jmfjdf(jmf_queue_msg)
   jmf_message=jmf_message.replace("STATUS",status)
   data=mimeheader_jmf+jmf_message+mimefooter
 
@@ -260,10 +266,9 @@ def SendJob(url,pdfurl, *jdf_file_param):
   if jdf_file_param:
     jdf_file=jdf_file_param[0]
   else:
-    jdf_file="jmfjdf/Template.jdf"
-  print(jdf_file)
-  exit()
-  mime_file=CreateMimePackage("jmfjdf/SubmitQueueEntry.jmf",jdf_file,pdfurl)
+    jdf_file=jdf_template
+
+  mime_file=CreateMimePackage(jmf_submit_msg,jdf_file,pdfurl)
   with open(mime_file,'r') as datafile:
     headers={'Content-Type': 'multipart/related'}
     try:
@@ -275,8 +280,16 @@ def SendJob(url,pdfurl, *jdf_file_param):
       print(sys.exc_info()[0], "occurred.")
       return 0
     # When submission is successfull reply JMF will contain submitted queueentries, the latest QueueEntryID is the one just submitted, return this id.
-    Entries=root.getElementsByTagName("QueueEntry")
-    id_array=Entries[0].getAttribute("QueueEntryID")
+    try:
+      Entries=root.getElementsByTagName("QueueEntry")
+      id_array=Entries[0].getAttribute("QueueEntryID")
+    except:
+      print ("Job could not be submitted keeping mime package:",mime_file )
+      print ("PRISMAsync returned: \"", root.getElementsByTagName("Comment")[0].firstChild.nodeValue, "\"")
+      
+      return 0
   if id_array :
     os.remove(mime_file)
-  return id_array
+    return id_array
+  else:
+    return 0

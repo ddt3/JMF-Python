@@ -1,7 +1,4 @@
-import requests
-import xml.dom.minidom
-import time
-from jmfmessages import SendJob
+from jmfjdf.jmfmessages import SendJob
 
 # The jmfmessages library contains examples of how jmf can be used to send commands to PRISMAsync and obtain information from PRISMAsync
 # This file is an example of how the libraries can be used to send jobs to PRISMAsync 
