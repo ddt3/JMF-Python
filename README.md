@@ -35,3 +35,6 @@ Example python files have been added that make use of the jmfmessages module.
 Before using these examples: 
 * Enable JMF support on PRISMAsync 
 * Make sure to replace the current printer url ( http://PRISMAsync.cpp.canon:8010 ) in some of the examples to the address of your PRISMAsync.
+
+### TODO (future enhancements)
+* Add asynchronous communication (returnurl, subscriptions, ...)
