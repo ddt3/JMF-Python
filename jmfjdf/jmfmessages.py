@@ -2,7 +2,6 @@
 Contains a number of examples on how PRISMAsync jmf/jdf can be used for e.g. job management and printer status
 """
 import base64
-import os
 import re
 import sys
 import time
@@ -10,12 +9,13 @@ import uuid
 import xml.dom.minidom
 import requests
 from base64io import Base64IO
+from pathlib import Path
 
-# a few files are needed as part 
-basepath=os.path.dirname(os.path.abspath(__file__))
-jmf_queue_msg=basepath + "\\QueueStatus.jmf"
-jmf_submit_msg=basepath + "\\SubmitQueueEntry.jmf"
-jdf_template=basepath + "\\Template.jdf"
+# a few files are needed as part, using pathlib, so it will work on both Windows and linux
+basepath=Path(__file__).resolve().parent
+jmf_queue_msg=basepath.joinpath("QueueStatus.jmf")
+jmf_submit_msg=basepath.joinpath("SubmitQueueEntry.jmf")
+jdf_template=basepath.joinpath("Template.jdf")
 
 # This library contains contains examples of how jmf can be used to send command to PRISMAsync and obtain information from PRISMAsync
 # All jmf messages are send mime-encoded. Note that no libary is used for mime-encoding, messages are mime-encoded "by hand"
@@ -32,6 +32,7 @@ content-transfer-encoding:7bit
 Content-Disposition: attachment
 
 """
+
 # Mime header used for sending jdf
 mimeheader_jdf = """
 --I_Love_PRISMAsync
@@ -203,7 +204,7 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
   time_string=time.strftime('%Y-%m-%d_%H-%M-%S')
   i=0  
   unique_filename = time_string+"_"+str(i)+".mjm"
-  while os.path.exists(unique_filename):
+  while Path(unique_filename).exists():
     i+=1
     unique_filename=time_string+"_"+str(i)+".mjm"
   
@@ -244,7 +245,7 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
       with open(encoded_filename,'r') as tempfile:
         for line in tempfile:
           outfile.write(line)
-      os.remove(encoded_filename)
+      Path(encoded_filename).unlink()
     outfile.write(mimefooter)
 
   #outfile closed, return mime file name
@@ -289,7 +290,7 @@ def SendJob(url,pdfurl, *jdf_file_param):
       
       return 0
   if id_array :
-    os.remove(mime_file)
+    Path(mime_file).unlink()
     return id_array
   else:
     return 0
