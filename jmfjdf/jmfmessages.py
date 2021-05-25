@@ -233,6 +233,7 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
       
       #Adding the current time to the JDF ticket ID and PARTID, to make job easy to find in PRISMAsync jmf logging.
       jdf_message=jdf_message.replace("REPLACE_ID",time.asctime())
+      jdf_message=jdf_message.replace("REPLACE_JOBID",pdf_url.rsplit('/', 1)[-1])
       jdf_message=jdf_message.replace("REPLACE_JOBPARTID",time.asctime())
     outfile.write(jdf_message)
 
