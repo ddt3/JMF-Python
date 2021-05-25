@@ -13,8 +13,9 @@ from pathlib import Path
 
 # a few files are needed as part, using pathlib, so it will work on both Windows and linux
 basepath=Path(__file__).resolve().parent
-jmf_queue_msg=basepath.joinpath("QueueStatus.jmf")
-jmf_submit_msg=basepath.joinpath("SubmitQueueEntry.jmf")
+jmf_QueueStatus_msg=basepath.joinpath("QueueStatus.jmf")
+jmf_SubmitQueueEntry_msg=basepath.joinpath("SubmitQueueEntry.jmf")
+jmf_RemoveQueueEntry_msg=basepath.joinpath("RemoveQueueEntry.jmf")
 jdf_template=basepath.joinpath("Template.jdf")
 
 # This library contains contains examples of how jmf can be used to send command to PRISMAsync and obtain information from PRISMAsync
@@ -102,7 +103,7 @@ def ReturnQueueEntries (url, status):
   headers={'Content-Type': 'multipart/related'}
   # Create a jmf message to retrieve the queue status that Filters on job status, it is allowed to mention multiple job statuses   
   
-  jmf_message=read_jmfjdf(jmf_queue_msg)
+  jmf_message=read_jmfjdf(jmf_QueueStatus_msg)
   jmf_message=jmf_message.replace("STATUS",status)
   data=mimeheader_jmf+jmf_message+mimefooter
 
@@ -142,7 +143,7 @@ def RemoveQueueEntries (url, status):
       to_delete+="<QueueEntryDef QueueEntryID=\""+queue_ids[i]+"\" />\n"
 
     # Read a  template RemoveQueueEntry jmf message 
-    jmf_message=read_jmfjdf('jmfjdf/RemoveQueueEntry.jmf') 
+    jmf_message=read_jmfjdf(jmf_RemoveQueueEntry_msg) 
     # In this template replace QueueEntryID line with the QueueEntryIDs to_delete
     jmf_message=jmf_message.replace("<QueueEntryDef QueueEntryID=\"QUEUEENTRY\" />",to_delete)
     headers={'Content-Type': 'multipart/related'}
@@ -270,7 +271,7 @@ def SendJob(url,pdfurl, *jdf_file_param):
   else:
     jdf_file=jdf_template
 
-  mime_file=CreateMimePackage(jmf_submit_msg,jdf_file,pdfurl)
+  mime_file=CreateMimePackage(jmf_SubmitQueueEntry_msg,jdf_file,pdfurl)
   with open(mime_file,'r') as datafile:
     headers={'Content-Type': 'multipart/related'}
     try:

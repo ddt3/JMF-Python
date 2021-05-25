@@ -38,7 +38,9 @@ Before using these examples:
 
 ## Change history
 ### 1.0.2
-Replaced "os.path" by pathlib (in jmfmessages.py) for multiple OS compatiblity. 
+* Replaced "os.path" by pathlib (in jmfmessages.py) for multiple OS compatiblity
+* PDF file name is used for job name in CreateMimePackage (so for all jobs that are send)
+
 ## TODO (future enhancements)
 * Add asynchronous communication (returnurl, subscriptions, ...)
 * Include own webserver for JDF filespec url's
