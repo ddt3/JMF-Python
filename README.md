@@ -38,7 +38,8 @@ Before using these examples:
 
 ## Change history
 ### 1.0.2
-* Added SendMimeJob, for sending a mime pacakged Job to PRISMAsync 
+* Added SendMimeJob, for sending a mime pacakged Job to PRISMAsync
+* PRISMAsyncAddress in SendJob
 * Multiple OS compatiblity improved (replaced "os.path" by pathlib in jmfmessages.py) 
 * Show PDF file name as job name ( in CreateMimePackage)
 
