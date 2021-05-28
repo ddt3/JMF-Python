@@ -36,5 +36,13 @@ Before using these examples:
 * Enable JMF support on PRISMAsync 
 * Make sure to replace the current printer url ( http://PRISMAsync.cpp.canon:8010 ) in some of the examples to the address of your PRISMAsync.
 
-### TODO (future enhancements)
+## Change history
+### 1.0.2
+* Added SendMimeJob, for sending a mime pacakged Job to PRISMAsync 
+* Multiple OS compatiblity improved (replaced "os.path" by pathlib in jmfmessages.py) 
+* Show PDF file name as job name ( in CreateMimePackage)
+
+## TODO (future enhancements)
 * Add asynchronous communication (returnurl, subscriptions, ...)
+* Include own webserver for JDF filespec url's
+

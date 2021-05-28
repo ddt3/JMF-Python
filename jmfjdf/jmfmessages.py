@@ -11,17 +11,22 @@ import requests
 from base64io import Base64IO
 from pathlib import Path
 
-# a few files are needed as part, using pathlib, so it will work on both Windows and linux
-basepath=Path(__file__).resolve().parent
-jmf_queue_msg=basepath.joinpath("QueueStatus.jmf")
-jmf_submit_msg=basepath.joinpath("SubmitQueueEntry.jmf")
-jdf_template=basepath.joinpath("Template.jdf")
-
-# This library contains contains examples of how jmf can be used to send command to PRISMAsync and obtain information from PRISMAsync
+# This library contains examples of how jmf can be used to send commands to PRISMAsync and obtain information from PRISMAsync
 # All jmf messages are send mime-encoded. Note that no libary is used for mime-encoding, messages are mime-encoded "by hand"
 
+# A few files are needed containing jmf messages and a JDF example ticket, 
+# These files are stored in the same folder as this file so that is used as an anchor point
+# pathlib is used, so this library will work on both Windows and linux
+basepath=Path(__file__).resolve().parent
+jmf_QueueStatus_msg=basepath.joinpath("QueueStatus.jmf")
+jmf_SubmitQueueEntry_msg=basepath.joinpath("SubmitQueueEntry.jmf")
+jmf_RemoveQueueEntry_msg=basepath.joinpath("RemoveQueueEntry.jmf")
+jdf_template=basepath.joinpath("Template.jdf")
 
-# Mime header used for sending jmf
+
+
+
+# Mime header used as header to a jmf
 mimeheader_jmf = """MIME-Version: 1.0
 Content-Type: multipart/related; boundary="I_Love_PRISMAsync"
 
@@ -33,7 +38,7 @@ Content-Disposition: attachment
 
 """
 
-# Mime header used for sending jdf
+# Mime header used as a header to a jdf
 mimeheader_jdf = """
 --I_Love_PRISMAsync
 Content-ID: part2@cpp.canon 
@@ -42,7 +47,7 @@ content-type: application/vnd.cip4-jdf+xml; charset="us-ascii"
 content-disposition: attachment; filename="Ticket.jdf"
 
 """
-# Mime header used for sending pdf
+# Mime header used as a header to a pdf
 mimeheader_pdf = """
 --I_Love_PRISMAsync
 Content-ID: part3@cpp.canon
@@ -102,10 +107,10 @@ def ReturnQueueEntries (url, status):
   headers={'Content-Type': 'multipart/related'}
   # Create a jmf message to retrieve the queue status that Filters on job status, it is allowed to mention multiple job statuses   
   
-  jmf_message=read_jmfjdf(jmf_queue_msg)
+  jmf_message=read_jmfjdf(jmf_QueueStatus_msg)
   jmf_message=jmf_message.replace("STATUS",status)
   data=mimeheader_jmf+jmf_message+mimefooter
-
+  print(data)
   try:
     response=requests.post(url=url,data=data,headers=headers)
     root = xml.dom.minidom.parseString(response.content)
@@ -142,7 +147,7 @@ def RemoveQueueEntries (url, status):
       to_delete+="<QueueEntryDef QueueEntryID=\""+queue_ids[i]+"\" />\n"
 
     # Read a  template RemoveQueueEntry jmf message 
-    jmf_message=read_jmfjdf('jmfjdf/RemoveQueueEntry.jmf') 
+    jmf_message=read_jmfjdf(jmf_RemoveQueueEntry_msg) 
     # In this template replace QueueEntryID line with the QueueEntryIDs to_delete
     jmf_message=jmf_message.replace("<QueueEntryDef QueueEntryID=\"QUEUEENTRY\" />",to_delete)
     headers={'Content-Type': 'multipart/related'}
@@ -270,7 +275,25 @@ def SendJob(url,pdfurl, *jdf_file_param):
   else:
     jdf_file=jdf_template
 
-  mime_file=CreateMimePackage(jmf_submit_msg,jdf_file,pdfurl)
+  mime_file=CreateMimePackage(jmf_SubmitQueueEntry_msg,jdf_file,pdfurl)
+  id_array=SendMimeJob(url,mime_file)
+  if id_array :
+    Path(mime_file).unlink()
+    return id_array
+  else:
+    return 0
+
+def SendMimeJob(url,mime_file):
+  """Sends a mime file to the given url
+
+    Parameters:
+    url: Full link to printer jmf interface e.g. http://prismasync.lan:8010
+    mime_file: Path to mime file mime (containing JMF,JDF and optionally a PDF).
+
+    Returns:
+    id:QueueEntryID of submitted job
+
+  """  
   with open(mime_file,'r') as datafile:
     headers={'Content-Type': 'multipart/related'}
     try:
@@ -284,14 +307,10 @@ def SendJob(url,pdfurl, *jdf_file_param):
     # When submission is successfull reply JMF will contain submitted queueentries, the latest QueueEntryID is the one just submitted, return this id.
     try:
       Entries=root.getElementsByTagName("QueueEntry")
-      id_array=Entries[0].getAttribute("QueueEntryID")
+      return_id_array=Entries[0].getAttribute("QueueEntryID")
     except:
       print ("Job could not be submitted keeping mime package:",mime_file )
       print ("PRISMAsync returned: \"", root.getElementsByTagName("Comment")[0].firstChild.nodeValue, "\"")
       
       return 0
-  if id_array :
-    Path(mime_file).unlink()
-    return id_array
-  else:
-    return 0
+    return return_id_array
