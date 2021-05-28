@@ -38,8 +38,9 @@ Before using these examples:
 
 ## Change history
 ### 1.0.2
-* Replaced "os.path" by pathlib (in jmfmessages.py) for multiple OS compatiblity
-* PDF file name is used for job name in CreateMimePackage (so for all jobs that are send)
+* Added SendMimeJob, for sending a mime pacakged Job to PRISMAsync 
+* Multiple OS compatiblity improved (replaced "os.path" by pathlib in jmfmessages.py) 
+* Show PDF file name as job name ( in CreateMimePackage)
 
 ## TODO (future enhancements)
 * Add asynchronous communication (returnurl, subscriptions, ...)

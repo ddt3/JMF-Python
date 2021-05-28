@@ -272,6 +272,24 @@ def SendJob(url,pdfurl, *jdf_file_param):
     jdf_file=jdf_template
 
   mime_file=CreateMimePackage(jmf_SubmitQueueEntry_msg,jdf_file,pdfurl)
+  id_array=SendMimeJob(url,mime_file)
+  if id_array :
+    Path(mime_file).unlink()
+    return id_array
+  else:
+    return 0
+
+def SendMimeJob(url,mime_file):
+  """Sends a mime file to the given url
+
+    Parameters:
+    url: Full link to printer jmf interface e.g. http://prismasync.lan:8010
+    mime_file: Path to mime file mime (containing JMF,JDF and optionally a PDF).
+
+    Returns:
+    id:QueueEntryID of submitted job
+
+  """  
   with open(mime_file,'r') as datafile:
     headers={'Content-Type': 'multipart/related'}
     try:
@@ -285,14 +303,10 @@ def SendJob(url,pdfurl, *jdf_file_param):
     # When submission is successfull reply JMF will contain submitted queueentries, the latest QueueEntryID is the one just submitted, return this id.
     try:
       Entries=root.getElementsByTagName("QueueEntry")
-      id_array=Entries[0].getAttribute("QueueEntryID")
+      return_id_array=Entries[0].getAttribute("QueueEntryID")
     except:
       print ("Job could not be submitted keeping mime package:",mime_file )
       print ("PRISMAsync returned: \"", root.getElementsByTagName("Comment")[0].firstChild.nodeValue, "\"")
       
       return 0
-  if id_array :
-    Path(mime_file).unlink()
-    return id_array
-  else:
-    return 0
+    return return_id_array
