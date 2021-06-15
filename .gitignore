@@ -142,3 +142,5 @@ Python/config.ini
 #HDOK
 #generated mjm files
 *-*-*_*-*-*_*.mjm
+#test files and try-outs
+tests/*

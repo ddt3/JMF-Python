@@ -110,7 +110,6 @@ def ReturnQueueEntries (url, status):
   jmf_message=read_jmfjdf(jmf_QueueStatus_msg)
   jmf_message=jmf_message.replace("STATUS",status)
   data=mimeheader_jmf+jmf_message+mimefooter
-  print(data)
   try:
     response=requests.post(url=url,data=data,headers=headers)
     root = xml.dom.minidom.parseString(response.content)
@@ -221,7 +220,7 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
     with open(jmf_file,'r') as tempfile:
       jmf_message=tempfile.read()
       # In this JMF message, include refrence to JDF file: JDF file is part2 of this mime pacakge. 
-      jmf_message=re.sub("URL=\".*\"","URL=\"cid:part2@cpp.canon\"",jmf_message)
+      jmf_message=re.sub(" URL=\".*?\""," URL=\"cid:part2@cpp.canon\"",jmf_message)
     outfile.write(jmf_message)
     
     # Part 2: JDF ticket
@@ -232,9 +231,9 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
       jdf_message=tempfile.read()
       # In this JDF ticket, include refrence to PDF file: PDF file is either part3 of this mime pacakge or reference to using url. 
       if sendmime :
-        jdf_message=re.sub("URL=\".*\"","URL=\"cid:part3@cpp.canon\"",jdf_message)
+        jdf_message=re.sub(" URL=\".*?\""," URL=\"cid:part3@cpp.canon\"",jdf_message)
       else :
-        jdf_message=re.sub("URL=\".*\"","URL=\""+pdf_url+"\"",jdf_message)
+        jdf_message=re.sub(" URL=\".*?\""," URL=\""+pdf_url+"\"",jdf_message)
       
       #Adding the current time to the JDF ticket ID and PARTID, to make job easy to find in PRISMAsync jmf logging.
       jdf_message=jdf_message.replace("REPLACE_ID",time.asctime())
