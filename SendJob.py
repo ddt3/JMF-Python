@@ -1,5 +1,5 @@
 import ipaddress
-from jmfjdf.jmfmessages import CreateMimePackage, SendJob, SendMimeJob
+from jmfjdf.jmfmessages import CreateMimePackage, SendJob, SendMime
 
 # The jmfmessages library contains examples of how jmf can be used to send commands to PRISMAsync and obtain information from PRISMAsync
 # This file is an example of how the libraries can be used to send jobs to PRISMAsync 
@@ -13,4 +13,4 @@ print("Job was submitted and has QueueEntryID:",SendJob(PRISMAsyncAddress, "http
 # Submit a PDF file using a URL and provide a JDF, template JMF is used
 print("Job was submitted and has QueueEntryID:",SendJob(PRISMAsyncAddress, "file://jmfjdf/Test.pdf", "jmfjdf/Template.jdf" ))
 # Create a mimepackage file and send it
-SendMimeJob(PRISMAsyncAddress,CreateMimePackage("jmfjdf/SubmitQueueEntry.jmf","jmfjdf/Template.jdf", "file://jmfjdf/Test.pdf"))
+SendMime(PRISMAsyncAddress,CreateMimePackage("jmfjdf/SubmitQueueEntry.jmf","jmfjdf/Template.jdf", "file://jmfjdf/Test.pdf"))

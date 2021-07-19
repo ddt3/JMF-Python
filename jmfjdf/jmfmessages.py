@@ -275,14 +275,14 @@ def SendJob(url,pdfurl, *jdf_file_param):
     jdf_file=jdf_template
 
   mime_file=CreateMimePackage(jmf_SubmitQueueEntry_msg,jdf_file,pdfurl)
-  id_array=SendMimeJob(url,mime_file)
+  id_array=SendMime(url,mime_file)
   if id_array :
     Path(mime_file).unlink()
     return id_array
   else:
     return 0
 
-def SendMimeJob(url,mime_file):
+def SendMime(url,mime_file):
   """Sends a mime file to the given url
 
     Parameters:

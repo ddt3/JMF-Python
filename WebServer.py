@@ -9,6 +9,8 @@ from threading import Thread
 
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    def handle_info(self,body):
+        pass
 
     def do_GET(self):
         #print("in GET")
@@ -20,21 +22,21 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         #print("in POST")
         content_length = int(self.headers['Content-Length'])
         body = self.rfile.read(content_length)
+        self.handle_info(body)
         self.send_response(200)
         self.end_headers()
         
         # you can do anything with the body, even save it to disk :)
         # for now, just use time in milisec to make sure the file name is unique
-        with open("signal_%s.status" %time(), 'wb') as f:
-            f.write(body)
-           
+          
         #response = BytesIO()
         #response.write(b'This is POST request. ')
         #response.write(b'Received: ')
         #response.write(body)
         #self.wfile.write(response.getvalue())
         #print(body)
-
+    def log_message(self, format, *args):
+        return
 
 # configure and start/stop the server. path = '.' will start the server in the curent dir, provide a different path for a different directory  
 def getServer(host='localhost', port=9090, path='.'):
@@ -80,9 +82,14 @@ def getServer(host='localhost', port=9090, path='.'):
 #usage example
 port = 9090
 address = '0.0.0.0'
+def myown(self,body):
+    with open("signal_%s.status" %time(), 'wb') as f:
+        f.write(body)
 
+SimpleHTTPRequestHandler.handle_info=myown
 #create the server
 startServer, stopServer = getServer(address, port)
+
 
 #start the server
 startServer()

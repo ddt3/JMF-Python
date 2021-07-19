@@ -144,3 +144,5 @@ Python/config.ini
 *-*-*_*-*-*_*.mjm
 #test files and try-outs
 tests/*
+#generated status files
+signal*.status
