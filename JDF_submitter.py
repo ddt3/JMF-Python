@@ -1,4 +1,5 @@
-from jmfjdf.jmfmessages import SendJob
+from jmfjdf.jmfmessages import SendJob, basepath
+from pathlib import Path
 import argparse
 
 #############################################################################################################
@@ -8,16 +9,17 @@ import argparse
 
 # Provide a correct address for your printer: http://<hostname or ip address>:<portnumber>
 # By PRISMAsync default port number is 8010. make sure to enable jmf support in the PRISMAsync settings editor
+
 PrinterUrl="http://PRISMAsync.cpp.canon:8010"
 
 # Which JMF file to use for submission in the examples
-JMFFile="jmfjdf/SubmitQueueEntry.jmf"
+JMFFile=str(basepath.joinpath("SubmitQueueEntry.jmf"))
 
 # Which JdF file to use for submission in the examples
-JDFFile="jmfjdf/Template.jdf"
+JDFFile=str(basepath.joinpath("Template.jdf"))
 
 # Which Jdf file to use for submission in the examples, either using a path to a file (file://) or to a webserver (http://)
-PDFUrl="file://jmfjdf/Test.pdf"
+PDFUrl="file://"+str(basepath.joinpath("Test.pdf"))
 
 # The following block is used to take command line options for this tool.
 parser = argparse.ArgumentParser(description='Submit JMF, JDF, and PDF to PRISMAsync ')

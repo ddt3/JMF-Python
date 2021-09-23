@@ -1,4 +1,5 @@
-from jmfjdf.jmfmessages import CreateMimePackage
+from jmfjdf.jmfmessages import CreateMimePackage, basepath
+from pathlib import Path
 import argparse
 
 #############################################################################################################
@@ -6,14 +7,15 @@ import argparse
 #                                                                                                           #
 #############################################################################################################
 
+
 # Which JMF file to use for submission in the examples
-JMFFile="jmfjdf/SubmitQueueEntry.jmf"
+JMFFile=str(basepath.joinpath("SubmitQueueEntry.jmf"))
 
 # Which JdF file to use for submission in the examples
-JDFFile="jmfjdf/Template.jdf"
+JDFFile=str(basepath.joinpath("Template.jdf"))
 
 # Which Jdf file to use for submission in the examples, either using a path to a file (file://) or to a webserver (http://)
-PDFUrl="file://jmfjdf/Test.pdf"
+PDFUrl="file://"+str(basepath.joinpath("Test.pdf"))
 
 # The following block is used to take command line options for this tool.
 parser = argparse.ArgumentParser(description='Create a mime package (mjm) from jmf, jdf and PDF. PDF can be added either by reference (http) or as a file to include in the mime package')
