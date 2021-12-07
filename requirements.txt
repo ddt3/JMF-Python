@@ -3,4 +3,5 @@ certifi
 chardet
 idna
 requests
-urllib3
+uuid
+defusedxml

@@ -1,6 +1,8 @@
-from jmfjdf.jmfmessages import CreateMimePackage, basepath
-from pathlib import Path
+"""
+Contains an example on how jmfmessasge module can be used to create mime packages
+"""
 import argparse
+from jmfjdf.jmfmessages import CreateMimePackage, basepath
 
 #############################################################################################################
 #First some defaults are set to make usage without parameters possible                                      #
@@ -18,7 +20,7 @@ JDFFile=str(basepath.joinpath("Template.jdf"))
 PDFUrl="file://"+str(basepath.joinpath("Test.pdf"))
 
 # The following block is used to take command line options for this tool.
-parser = argparse.ArgumentParser(description='Create a mime package (mjm) from jmf, jdf and PDF. PDF can be added either by reference (http) or as a file to include in the mime package')
+parser = argparse.ArgumentParser(description='Create a mime package (mjm) from jmf, jdf and PDF. PDF can be added either by reference (http) or as a file to include in the mime package') #pylint: disable=C0301
 parser.add_argument('--jmf', '-j', type=str, default=JMFFile,
                     help='Provide filename for JMF messages used for submissiuon (default: '+JMFFile+' )')
 parser.add_argument('--jdf', '-t', type=str, default=JDFFile,
@@ -28,7 +30,7 @@ parser.add_argument('--pdf', '-p', type=str, default=PDFUrl,
 args = parser.parse_args()
 
 
-# The jmfmessages library contains examples of how jmf can be used to send commands to PRISMAsync and obtain information from PRISMAsync
-# This file is an example of how the libraries can be used to create a full mime package (including PDF)
+# The jmfmessages library contains examples of how jmf can be used to send commands to PRISMAsync and obtain information
+# from PRISMAsync. This file is an example of how the libraries can be used to create a full mime package (including PDF)
 
 print("Mime-package created with filename:",CreateMimePackage(args.jmf,args.jdf, args.pdf))

@@ -1,20 +1,19 @@
 """
 Contains a number of examples on how PRISMAsync jmf/jdf can be used for e.g. job management and printer status
 """
-import base64
 import re
 import sys
 import time
 import uuid
-import xml.dom.minidom
+from pathlib import Path
+import defusedxml.minidom
 import requests
 from base64io import Base64IO
-from pathlib import Path
 
 # This library contains examples of how jmf can be used to send commands to PRISMAsync and obtain information from PRISMAsync
 # All jmf messages are send mime-encoded. Note that no libary is used for mime-encoding, messages are mime-encoded "by hand"
 
-# A few files are needed containing jmf messages and a JDF example ticket, 
+# A few files are needed containing jmf messages and a JDF example ticket,
 # These files are stored in the same folder as this file so that is used as an anchor point
 # pathlib is used, so this library will work on both Windows and linux
 basepath=Path(__file__).resolve().parent
@@ -27,7 +26,7 @@ jdf_template=basepath.joinpath("Template.jdf")
 
 
 # Mime header used as header to a jmf
-mimeheader_jmf = """MIME-Version: 1.0
+MIMEHEADER_JMF = """MIME-Version: 1.0
 Content-Type: multipart/related; boundary="I_Love_PRISMAsync"
 
 --I_Love_PRISMAsync
@@ -39,7 +38,7 @@ Content-Disposition: attachment
 """
 
 # Mime header used as a header to a jdf
-mimeheader_jdf = """
+MIMEHEADER_JDF = """
 --I_Love_PRISMAsync
 Content-ID: part2@cpp.canon 
 content-transfer-encoding:7bit 
@@ -48,7 +47,7 @@ content-disposition: attachment; filename="Ticket.jdf"
 
 """
 # Mime header used as a header to a pdf
-mimeheader_pdf = """
+MIMEHEADER_PDF = """
 --I_Love_PRISMAsync
 Content-ID: part3@cpp.canon
 Content-Type: application/octet-stream; name=Job1.pdf
@@ -58,7 +57,7 @@ Content-Disposition: attachment; filename=Job1.pdf
 """
 
 # Mime Footer
-mimefooter = """
+MIMEFOOTER = """
 --I_Love_PRISMAsync--"""
 
 
@@ -73,25 +72,12 @@ def read_jmfjdf (message_file):
 
   """
   try:
-
-    file = open(message_file)
-    message=file.read()
-    file.close
-  except :
-    print ("ERR: Trouble reading: ", message_file)
-    exit()
+    with open(message_file, 'r', encoding="ascii") as file:
+      message=file.read()
+  except IOError as excp:
+    print ("I/O error",excp.errno, ":", excp.strerror,message_file)
+    sys.exit()
   return message
-  
-def read_pdf (pdf_file):
-  try:
-
-    file = open(pdf_file)
-    pdf=file.read()
-    file.close
-  except :
-    print ("ERR: Trouble reading: ", pdf_file)
-    exit()
-  return pdf
 
 def ReturnQueueEntries (url, status):
   """Return all queue entries with the given states
@@ -105,25 +91,25 @@ def ReturnQueueEntries (url, status):
 
   """
   headers={'Content-Type': 'multipart/related'}
-  # Create a jmf message to retrieve the queue status that Filters on job status, it is allowed to mention multiple job statuses   
-  
+  # Create a jmf message to retrieve the queue status that Filters on job status, it is allowed to mention multiple job statuses
   jmf_message=read_jmfjdf(jmf_QueueStatus_msg)
   jmf_message=jmf_message.replace("STATUS",status)
-  data=mimeheader_jmf+jmf_message+mimefooter
+  data=MIMEHEADER_JMF+jmf_message+MIMEFOOTER
   try:
     response=requests.post(url=url,data=data,headers=headers)
-    root = xml.dom.minidom.parseString(response.content)
-  except:
+    root = defusedxml.minidom.parseString(response.content)
+  except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
     print("Unexpected reply from", url)
     print(sys.exc_info()[0], "occurred.")
-    return 0
+    id_array=[]
+    return id_array
   Entries=root.getElementsByTagName("QueueEntry")
   id_array=[]
   for qid in Entries:
     id_array.append(qid.getAttribute("QueueEntryID"))
   return id_array
 
-example_job="cid:Job1.pdf"
+EXAMPLE_JOB="cid:Job1.pdf"
 
 def RemoveQueueEntries (url, status):
   """Removes all queue entries with the given states
@@ -139,25 +125,25 @@ def RemoveQueueEntries (url, status):
   # First request QueueEntryIDs having a specific state
   queue_ids=ReturnQueueEntries(url,status)
   nrjobs=len(queue_ids)
-  if nrjobs:  
+  if nrjobs:
     to_delete=""
     # Add a line mentioning the QueueEntryID for each found QueueEntryID
     for i in range(nrjobs):
       to_delete+="<QueueEntryDef QueueEntryID=\""+queue_ids[i]+"\" />\n"
 
-    # Read a  template RemoveQueueEntry jmf message 
-    jmf_message=read_jmfjdf(jmf_RemoveQueueEntry_msg) 
+    # Read a  template RemoveQueueEntry jmf message
+    jmf_message=read_jmfjdf(jmf_RemoveQueueEntry_msg)
     # In this template replace QueueEntryID line with the QueueEntryIDs to_delete
     jmf_message=jmf_message.replace("<QueueEntryDef QueueEntryID=\"QUEUEENTRY\" />",to_delete)
     headers={'Content-Type': 'multipart/related'}
     # Wrap jmf message in mime
-    deletemessage=mimeheader_jmf+jmf_message+mimefooter
-    
+    deletemessage=MIMEHEADER_JMF+jmf_message+MIMEFOOTER
+
     try:
       # Send delete message to PRISMAsync and wait for response
       delresponse =  requests.post(url=url,data=deletemessage, headers=headers)
-      root = xml.dom.minidom.parseString(delresponse.content)
-    except:
+      root = defusedxml.minidom.parseString(delresponse.content)
+    except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout):
       print("Unexpected reply from", url)
       print(sys.exc_info()[0], "occurred.")
       return 0
@@ -167,7 +153,7 @@ def RemoveQueueEntries (url, status):
       for qid in entries:
         print(qid.firstChild.nodeValue)
         nrjobs-=1
-    return nrjobs
+  return nrjobs
 
 def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
   """Creates a mime pacakge from the provided files
@@ -175,16 +161,16 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
     Parameters:
     jmf_file: Path to jmf file (first file in mime)
     jdf_file: Path to jdf file (second file in mime)
-    pdf_url:  Url to PDF file. 
+    pdf_url:  Url to PDF file.
               use file:// url to base64 encode the PDF and add it to the mime package (third file in mime)
               in all other cases the pdf_url will be used for JDF FileSpec URL
     Returns:
-    Filename of created mime package 
+    Filename of created mime package
   """
   # unique_filename = str(uuid.uuid4())+".mjm"
   encoded_filename="EN-"+str(uuid.uuid4())
 
-  # First determine if PDF needs to be included in mime of referenced by url 
+  # First determine if PDF needs to be included in mime of referenced by url
   # If it needs to be included in mime: encode the PDF in base64 format
   sendmime="file://" in pdf_url
   pdf_file=str(pdf_url).replace("file://","")
@@ -193,10 +179,10 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
     try:
       with open(pdf_file, "rb") as source, open(encoded_filename, "wb") as target:
           # Create base64 encoded file from PDF
-          with Base64IO(target) as encoded_target:
-              for line in source:
-                  encoded_target.write(line)
-    except:
+        with Base64IO(target) as encoded_target:
+          for line in source:
+            encoded_target.write(line)
+    except IOError:
       print("File", sendmime, "could not be opened")
       return ""
 
@@ -206,35 +192,35 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
 
   # Now create complete mime package in 2 parts (without base64 PDF) or 3 parts (with base64 PDF)
   time_string=time.strftime('%Y-%m-%d_%H-%M-%S')
-  i=0  
+  i=0
   unique_filename = time_string+"_"+str(i)+".mjm"
   while Path(unique_filename).exists():
     i+=1
     unique_filename=time_string+"_"+str(i)+".mjm"
-  
-  with open(unique_filename, 'w') as outfile:
-    # Part 1: JMF messages 
+
+  with open(unique_filename, 'w', encoding='ascii') as outfile:
+    # Part 1: JMF messages
     # Start with JMF mimeheader
-    outfile.write(mimeheader_jmf)
+    outfile.write(MIMEHEADER_JMF)
     # Add jmf file
-    with open(jmf_file,'r') as tempfile:
+    with open(jmf_file,'r',  encoding='ascii') as tempfile:
       jmf_message=tempfile.read()
-      # In this JMF message, include refrence to JDF file: JDF file is part2 of this mime pacakge. 
+      # In this JMF message, include refrence to JDF file: JDF file is part2 of this mime pacakge.
       jmf_message=re.sub(" URL=\".*?\""," URL=\"cid:part2@cpp.canon\"",jmf_message)
     outfile.write(jmf_message)
-    
+
     # Part 2: JDF ticket
     # Start with JDF mimeheader
-    outfile.write(mimeheader_jdf)
+    outfile.write(MIMEHEADER_JDF)
     # Add jdf file
-    with open(jdf_file, 'r') as tempfile:
+    with open(jdf_file, 'r', encoding='ascii') as tempfile:
       jdf_message=tempfile.read()
-      # In this JDF ticket, include refrence to PDF file: PDF file is either part3 of this mime pacakge or reference to using url. 
+      # In this JDF ticket, include refrence to PDF file: PDF file is either part3 of this mime pacakge or reference to using url.
       if sendmime :
         jdf_message=re.sub(" URL=\".*?\""," URL=\"cid:part3@cpp.canon\"",jdf_message)
       else :
         jdf_message=re.sub(" URL=\".*?\""," URL=\""+pdf_url+"\"",jdf_message)
-      
+
       #Adding the current time to the JDF ticket ID and PARTID, to make job easy to find in PRISMAsync jmf logging.
       jdf_message=jdf_message.replace("REPLACE_ID",time.asctime())
       jdf_message=jdf_message.replace("REPLACE_JOBID",pdf_url.rsplit('/', 1)[-1])
@@ -245,13 +231,13 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
     if sendmime :
       # Needs to be send in mime package, adding it
       # Start with PDF mimeheader
-      outfile.write(mimeheader_pdf)
+      outfile.write(MIMEHEADER_PDF)
       # Add pdf file
-      with open(encoded_filename,'r') as tempfile:
+      with open(encoded_filename,'r', encoding='ascii') as tempfile:
         for line in tempfile:
           outfile.write(line)
       Path(encoded_filename).unlink()
-    outfile.write(mimefooter)
+    outfile.write(MIMEFOOTER)
 
   #outfile closed, return mime file name
   return unique_filename
@@ -292,24 +278,26 @@ def SendMimeJob(url,mime_file):
     Returns:
     id:QueueEntryID of submitted job
 
-  """  
-  with open(mime_file,'r') as datafile:
+  """
+  with open(mime_file,'r',  encoding='ascii') as datafile:
     headers={'Content-Type': 'multipart/related'}
     try:
       # Submit the mime message to PRISMAsync and wait for the response
       response=requests.post(url=url, data=datafile.read(), headers=headers)
-      root = xml.dom.minidom.parseString(response.content)
-    except:
+      root = defusedxml.minidom.parseString(response.content)
+    except requests.exceptions.ConnectionError:
       print("Unexpected reply from", url)
       print(sys.exc_info()[0], "occurred.")
       return 0
-    # When submission is successfull reply JMF will contain submitted queueentries, the latest QueueEntryID is the one just submitted, return this id.
+    # When submission is successfull reply JMF will contain submitted queueentries,
+    # the latest QueueEntryID is the one just submitted, return this id.
     try:
       Entries=root.getElementsByTagName("QueueEntry")
       return_id_array=Entries[0].getAttribute("QueueEntryID")
-    except:
+    except:  #pylint: disable=bare-except
+      print("----\n", sys.exc_info()[0], "----\n")
       print ("Job could not be submitted keeping mime package:",mime_file )
       print ("PRISMAsync returned: \"", root.getElementsByTagName("Comment")[0].firstChild.nodeValue, "\"")
-      
+
       return 0
     return return_id_array

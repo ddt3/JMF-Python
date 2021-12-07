@@ -1,5 +1,7 @@
 {
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true,
-    "python.linting.pylamaEnabled": false
+    "python.linting.pylintArgs": ["--max-line-length=130", "--indent-string='  '","--disable=C0103"],
+    "python.linting.pylamaEnabled": true,
+    "python.linting.banditEnabled": true
 }
