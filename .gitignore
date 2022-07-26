@@ -146,3 +146,4 @@ Python/config.ini
 tests/*
 #generated status files
 signal*.status
+.pylintrc

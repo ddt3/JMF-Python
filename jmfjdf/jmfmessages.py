@@ -206,11 +206,11 @@ def CreateMimePackage (jmf_file, jdf_file,pdf_url) :
 
   # Now create complete mime package in 2 parts (without base64 PDF) or 3 parts (with base64 PDF)
   time_string=time.strftime('%Y-%m-%d_%H-%M-%S')
-  i=0  
+  i=uuid.uuid1()  
   unique_filename = time_string+"_"+str(i)+".mjm"
-  while Path(unique_filename).exists():
-    i+=1
-    unique_filename=time_string+"_"+str(i)+".mjm"
+  # while Path(unique_filename).exists():
+  #   i+=1
+  #   unique_filename=time_string+"_"+str(i)+".mjm"
   
   with open(unique_filename, 'w') as outfile:
     # Part 1: JMF messages 
