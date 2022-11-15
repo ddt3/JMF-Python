@@ -3,5 +3,6 @@
     "python.linting.enabled": false,
     "python.linting.pylamaEnabled": false,
     "python.linting.banditEnabled": false,
-    "linter.enabled": true
+    "linter.enabled": true,
+    "terminal.integrated.defaultProfile.windows": "PowerShell"
 }

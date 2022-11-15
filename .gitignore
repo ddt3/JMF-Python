@@ -147,3 +147,5 @@ tests/*
 #generated status files
 signal*.status
 .pylintrc
+*/_received/*
+*/_response/*
