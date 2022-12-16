@@ -5,14 +5,22 @@ This simple example could be used as a starting point for workflows based on jmf
 """
 import requests, sys, argparse, socket
 from pathlib import Path
+# Write all received signals to a folder called _received
+# pathlib is used to make sure this works on linux and Windows
 basepath=Path(__file__).resolve().parent
+logdir=basepath.joinpath("_received")
+# create folder if it does not exist
+logdir.mkdir(parents=True, exist_ok=True)
+
 query_id="anidofanquery"
 
 # Defaults
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
 IpAddress=s.getsockname()[0]
-Statusfile=basepath.joinpath("signal.xml")
+
+# responses will ne store in one file (and thus overwritten)
+Statusfile=logdir.joinpath("signal.xml")
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Subscribe to QueueStatus of PRISMAsync ')

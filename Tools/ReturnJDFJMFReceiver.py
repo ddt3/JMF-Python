@@ -14,8 +14,11 @@ from time import time
 
 import requests
 
+# Write all received signals to a folder called _received
+# pathlib is used to make sure this works on linux and Windows
 basepath=Path(__file__).resolve().parent
 logdir=basepath.joinpath("_received")
+# create folder if it does not exist
 logdir.mkdir(parents=True, exist_ok=True)
 
 # Defaults
@@ -25,8 +28,6 @@ IpAddress=s.getsockname()[0]
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Receive information from PRISMAsync ')
-# parser.add_argument('--ip', type=str, default=IpAddress,
-#                     help='Provide ip adress of current system (default: '+IpAddress+')')
 parser.add_argument('--port', type=int, default=9090,
                     help='Provide port used for receiver (default: 9090')
 parser.add_argument('--debug', '-d', action='store_true',

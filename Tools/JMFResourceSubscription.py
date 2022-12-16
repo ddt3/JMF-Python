@@ -1,20 +1,28 @@
-"""This example does not need the jmfpython library , but parts of it are copied here. A JMF message is sent to subscribed to QueueStatus. 
-The information send by PRISMAsync is retrieved by a simple webserver. Queue information is send to file.
+"""This example does not need the jmfpython library , but parts of it are reused here. A JMF message is sent to subscribe to Resource information. 
+The information send by PRISMAsync (signal) is received by a simple webserver. Resource information is send to file.
 
-This simple example could be used as a starting point for workflows based on jmf subscxriptions
+This simple example could be used as a starting point for workflows based on jmf subscriptions
 """
 import re
 import requests, sys, argparse, socket
 from pathlib import Path
+
+# Write all received signals to a folder called _received
+# pathlib is used to make sure this works on linux and Windows
 basepath=Path(__file__).resolve().parent
+logdir=basepath.joinpath("_received")
+# create folder if it does not exist
+logdir.mkdir(parents=True, exist_ok=True)
+
 query_id="anidofanquery"
 count=0
 
 # Defaults
+# Determine own ipaddress, it is needed to subscribe to PRISMAsync information
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
 IpAddress=s.getsockname()[0]
-Statusfile=basepath.joinpath("signal.xml")
+Statusfile=logdir.joinpath("signal.xml")
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Subscribe to QueueStatus of PRISMAsync ')
@@ -29,9 +37,14 @@ parser.add_argument('--file',  type=str, default=str(Statusfile),
                     help='Provide filename for JDF ticket used for submissiuon (default: '+str(Statusfile)+')')
 parser.add_argument('--inc', '-i', action='store_true',
                     help='Add signal count to filename')
-parser.add_argument('--silent', '-s', action='store_true',
+parser.add_argument('--debug', '-d', action='store_true',
                     help='Do not print any output just subscribe and write to '+str(Statusfile))
 args = parser.parse_args()
+
+# Log some stuff for debugging purposes.
+def log(s):
+    if args.debug:
+        print(s)
 
 # Standard mime headers and JMF messages
 mimeheader_jmf = """MIME-Version: 1.0
@@ -52,13 +65,12 @@ mimefooter = """
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# from io import BytesIO
 from time import time
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     """The actual web server"""
       
     def do_GET(self):
-        #print("in GET")
+        log("in GET")
         self.send_response(200)
         self.end_headers()
         #self.wfile.write(b'Hello, world!')
@@ -67,8 +79,9 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         global count
         global Statusfile
         global args
+        global TrayWindow
 
-        print("in POST")
+        log("in POST")
         content_length = int(self.headers['Content-Length'])
         body = self.rfile.read(content_length)
         self.send_response(200)
@@ -78,18 +91,18 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         
         Statusfile=Path(args.file)
         if args.inc:
-          count+=1
+          folder=Statusfile.parent
           name=Statusfile.stem
           ext=Statusfile.suffix     
           file=name+"-"+str(count)+ext
-          Statusfile=Path(file)
-
+          Statusfile=folder.joinpath(file)
           
         with open(Statusfile, 'wb') as f:
             f.write(body)
+
            
-def subscribe_queue_status (url, sub_url):
-  """Send a subscription message to PRISMAsync with url
+def subscribe_resource (url, sub_url):
+  """Send a subscription message to PRISMAsync with url, subscribes to information using own ipaddress
 
     Parameters:
     url: full link to printer jmf interface e.g. http://prismasync.lan:8010
@@ -126,16 +139,18 @@ def subscribe_queue_status (url, sub_url):
   else:
     return response
 
-
+# form sunbcription url from parameters
 subs_url="http://"+str(args.ip)+":"+str(args.port)
-result=subscribe_queue_status(args.url,subs_url)
+# subscribe to resources, PRISMAsync returns a result on a subscription request, wrate that to file
+result=subscribe_resource(args.url,subs_url)
 data=result.content
 with open(args.file,'wb') as resultfile:
   resultfile.write(data)
 
 
+# if subscription request successfull
 if result != -1:
-
+# start web server
   port = args.port
   httpd = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
   print("Listening on port %s..." %port)

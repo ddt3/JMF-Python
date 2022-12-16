@@ -1,6 +1,12 @@
 import requests, sys, argparse, socket
 from pathlib import Path
+
+# Write response to a folder called _received
+# pathlib is used to make sure this works on linux and Windows
 basepath=Path(__file__).resolve().parent
+logdir=basepath.joinpath("_received")
+# create folder if it does not exist
+logdir.mkdir(parents=True, exist_ok=True)
 
 
 #Mime header
@@ -48,7 +54,7 @@ def retrieve_media_catalog(url):
     print(sys.exc_info()[0], "occurred.")
     return -1
   return response
-filename=basepath.joinpath("media.xml")
+filename=logdir.joinpath("media.xml")
 
 with open(filename, 'wb') as f:
             f.write(retrieve_media_catalog("http://fat-cep-620.ocevenlo.oce.net:8010").content)
