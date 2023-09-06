@@ -20,6 +20,32 @@
             "args": [
                 "--url",
                 "http://fat-cep-621.ocevenlo.oce.net:8010",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: fat-cep-621 80",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--url",
+                "http://fat-cep-621.ocevenlo.oce.net:8010",
+                "--port",
+                "80"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: fat-cep-621 --inc",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--url",
+                "http://fat-cep-621.ocevenlo.oce.net:8010",
                 "--inc"
             ],
             "console": "integratedTerminal",

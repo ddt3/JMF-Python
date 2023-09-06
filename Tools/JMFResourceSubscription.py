@@ -1,11 +1,14 @@
 """This example does not need the jmfpython library , but parts of it are reused here. A JMF message is sent to subscribe to Resource information. 
-The information send by PRISMAsync (signal) is received by a simple webserver. Resource information is send to file.
+The information send by PRISMAsync (signal) is received by a simple webserver. Resource information is stored in a file.
 
 This simple example could be used as a starting point for workflows based on jmf subscriptions
 """
-import re
-import requests, sys, argparse, socket
+import argparse
+import socket
+import sys
 from pathlib import Path
+
+import requests
 
 # Write all received signals to a folder called _received
 # pathlib is used to make sure this works on linux and Windows
@@ -14,7 +17,7 @@ logdir=basepath.joinpath("_received")
 # create folder if it does not exist
 logdir.mkdir(parents=True, exist_ok=True)
 
-query_id="anidofanquery"
+QUERY_ID="anidofanquery"
 count=0
 
 # Defaults
@@ -63,9 +66,10 @@ mimefooter = """
 --I_Love_PRISMAsync--"""
 
 
-from http.server import HTTPServer, BaseHTTPRequestHandler
-
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from time import time
+
+
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     """The actual web server"""
       
@@ -121,7 +125,7 @@ def subscribe_resource (url, sub_url):
 </JMF>
 """
   jmf_subscribe = jmf_subscribe.replace("SUBURL",sub_url)
-  jmf_subscribe = jmf_subscribe.replace("QUERYUUID",query_id)
+  jmf_subscribe = jmf_subscribe.replace("QUERYUUID",QUERY_ID)
   data=mimeheader_jmf+jmf_subscribe+mimefooter
   try:
     response=requests.post(url=url,data=data,headers=headers)

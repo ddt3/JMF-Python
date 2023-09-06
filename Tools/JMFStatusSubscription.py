@@ -16,7 +16,11 @@ query_id="anidofanquery"
 
 # Defaults
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
+try:
+   print(s.connect(("8.8.8.8", 80)))
+except:
+   exit(-1)
+
 IpAddress=s.getsockname()[0]
 
 # responses will ne store in one file (and thus overwritten)
@@ -97,6 +101,7 @@ def subscribe_queue_status (url, sub_url):
   </Query>
 </JMF>
 """
+  print(sub_url)
   jmf_subscribe = jmf_subscribe.replace("SUBURL",sub_url)
   jmf_subscribe = jmf_subscribe.replace("QUERYUUID",query_id)
   data=mimeheader_jmf+jmf_subscribe+mimefooter

@@ -1,5 +1,8 @@
+"""
+This short script removes all queue entries from the printer: PRISMAsync.cpp.canon
+"""
 from jmfjdf.jmfmessages import RemoveQueueEntries
 
-printer="http://PRISMAsync.cpp.canon:8010"
+PRINTER="http://PRISMAsync.cpp.canon:8010"
 
-print(RemoveQueueEntries(printer, " "), "QueueEntries have been removed")
+print(RemoveQueueEntries(PRINTER, " "), "QueueEntries have been removed")
