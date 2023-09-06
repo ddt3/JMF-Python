@@ -1,27 +1,32 @@
-"""This example does not need the jmfpython library , but parts of it are reused here. A JMF message is sent to subscribe to Resource information of media in the trays.
-The information send by PRISMAsync (signal) is received by a simple webserver. This information is used to fill a simple user interface that contains on overview of allt trays.
+"""This example does not need the jmfpython library , but parts of it are reused. 
+The following steps are performed:
+1) A JMF message is sent to subscribe to tesource information of media in the trays (library requests)
+2) A Webserver is started to receive the signals that are send by PRISMAsync  (library http.server)
+3) The information from these signals is interpreted (library xml.com.minidom)
+4) A user interface is filled with the information from step 4 (library tkinter), media name, media size and media weight is shown
 
 This simple example could be used as a starting point for workflows based on jmf subscriptions
 """
-# Import all needed modules
-import requests, sys, argparse, socket, threading, xml.dom.minidom, copy
-from pathlib import Path
-from tkinter import *
-
+import argparse
+import copy
 #from http.server import HTTPServer, BaseHTTPRequestHandler
 import http.server
+import socket
+import sys
+import threading
+import xml.dom.minidom
+from pathlib import Path
 from time import time
+from tkinter import *
 
-# Log some stuff for debugging purposes.
-# Write all received signals to a folder called _received
-# pathlib is used to make sure this works on linux and Windows
-# create folder if it does not exist
+# Import all needed modules
+import requests
 
 ################### Constant definitions ###############################
 headers={'Content-Type': 'multipart/related'}
   # Standard mime headers and JMF messages
   # Mime Header
-mimeheader_jmf = """MIME-Version: 1.0
+MIMEHEADERJMF = """MIME-Version: 1.0
 Content-Type: multipart/related; boundary="I_Love_PRISMAsync"
 
 --I_Love_PRISMAsync
@@ -33,35 +38,39 @@ Content-Disposition: attachment
 """
 
   # Mime Footer
-mimefooter = """
+MIMEFOOTER = """
 --I_Love_PRISMAsync--"""
 
 ################### Class definitions ###############################
 
 class StatusFile:
+    """
+    Write all received signals to a folder called _received
+    pathlib is used to make sure this works on linux and Windows
+    create folder if it does not exist
+    """
+    def __init__(self, signalfile, increment):
+        basepath=Path(__file__).resolve().parent   
+        self.logdir=basepath.joinpath("_received")
+        # create folder if it does not exist
+        self.logdir.mkdir(parents=True, exist_ok=True)
+        self.basename=Path(signalfile).stem
+        self.extension=Path(signalfile).suffix
+        self.count=0
+        self.increment=increment
 
-  def __init__(self, signalfile, increment):
-    basepath=Path(__file__).resolve().parent   
-    self.logdir=basepath.joinpath("_received")
-    # create folder if it does not exist
-    self.logdir.mkdir(parents=True, exist_ok=True)
-    self.basename=Path(signalfile).stem
-    self.extension=Path(signalfile).suffix
-    self.count=0
-    self.increment=increment
-
-  def write(self,data):
-    if self.increment:
-      filename=self.basename+'-'+str(self.count)+self.extension
-      self.count+=1
-    else:
-      filename=self.basename+self.extension
-    self.completepath=Path(self.logdir.joinpath(filename))
-    with open(self.completepath, 'wb') as f:
-            f.write(data)
+    def write(self,datatowrite):
+        if self.increment:
+            filename=self.basename+'-'+str(self.count)+self.extension
+            self.count+=1
+        else:
+            filename=self.basename+self.extension
+        self.completepath=Path(self.logdir.joinpath(filename))
+        with open(self.completepath, 'wb') as f:
+            f.write(datatowrite)
 
 class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
-    """The actual web server"""
+    """The web server that is used to handle http post requests. It needs to be running in the background to receive PRISMAsync signals"""
       
     def log_request(self, format, *args):
       if clargs.debug:
@@ -76,6 +85,9 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 
     def do_POST(self):
+        """ This method is called when PRISMAsync sends a signal based on the subscription. The signal is send using a POST request
+             In this method the signal is received and it is handled:the user interface is updated
+        """
         global args
         global TrayWindow, UI_Grid
         global response_file
@@ -97,6 +109,9 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             if len(Medias) > 0:
               # Only one ResourceInfo/Media is allowed, take the MediaName from that one
               MediaName=Medias[0].getAttribute("DescriptiveName")
+              MediaSize=PointsToPaperSize(Medias[0].getAttribute("Dimension"))
+              MediaWeight=Medias[0].getAttribute("Weight")
+              MediaCombinedNme=MediaName + "," + MediaSize + "," + MediaWeight+"gsm"
               PartAmounts=Resources.getElementsByTagName("PartAmount")
               # Media can be available in multiple trays, step through all ResourceInfo/Media/PartAmount
               for PartAmount in PartAmounts:
@@ -108,7 +123,7 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                   for y in range(len(TrayLayoutUI[x])):
                     TrayMedia=Trayname+"Mx"
                     if TrayMedia in TrayLayoutUI[x][y]:
-                      UI_Grid[x][y].insert(0,MediaName)
+                      UI_Grid[x][y].insert(0,MediaCombinedNme)
                 for x in range(len(TrayLayoutUI)):
                   for y in range(len(TrayLayoutUI[x])):
                     TrayMedia=Trayname+"Ax"
@@ -118,28 +133,48 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         response_file.write(body)
         TrayWindow.update()
 
-class JMfFiles:
-  def __init__(self, folder):
-     pass
-     
-     
+   
 
 
 ################### Function definitions ############################
 
-def pointstoformat(str):
-  numsplit=str.split(' ',1)
-  w=round(float(numsplit[0]))
-  h=round(float(numsplit[1]))
-  if w==595:
-    if h==842:
-      return "A4"
+def PointsToPaperSize(dim):
+  """ Return a paper size based on the dimensions of the media in points """
+  numsplit=dim.split(' ',1)
+  width=round(float(numsplit[0]))
+  height=round(float(numsplit[1]))
+  sizes = {
+    "Ledger"    : (1224, 792),
+    "SRA3"      : (907, 1276),
+    "RA3"       : (865, 1219),
+    "A3"        : (842, 1191),
+    "Tabloid"   : (792, 1224),
+    "SRA4"      : (638, 907),
+    "Legal"     : (612, 1008),
+    "Letter"    : (612, 792),
+    "A4"        : (595, 842),
+    "Executive" : (522, 756),
+    "A5"        : (421, 595),
+    "A6"        : (297, 421),
+  }
+  
+  
+  for size, dimensions in sizes.items():
+      if width == dimensions[0] and height == dimensions[1]:
+         return size
 
+  return str(width)+"pt x "+str(height)+"pt"
+
+  
 def log(s):
+    """ Write debug information if requested."""
     if clargs.debug:
         print(s)
 
 def clear(root):
+    """ Clear the user interface:
+        Remove all information from Entry fields in a Window 
+    """
     for widget in root.winfo_children():
         if not isinstance(widget, Entry):
             clear(widget)
@@ -149,14 +184,16 @@ def clear(root):
 def retrieve_tray_layout(url):
    pass
    
-def subscribe_resource (url, sub_url):
+def subscribe_resource (url, sub_url, query_id):
   """Send a subscription message to PRISMAsync with url, subscribes to information using own ipaddress
 
     Parameters:
     url: full link to printer jmf interface e.g. http://prismasync.lan:8010
     
     Returns:
-    
+      failed    : -1
+      succeeded : http response 
+
   """
   # Subscription JMF Messages
   # Create a jmf message to retrieve the queue status that Filters on job status, it is allowed to mention multiple job statuses   
@@ -170,7 +207,7 @@ def subscribe_resource (url, sub_url):
 """
   jmf_subscribe = jmf_subscribe.replace("SUBURL",sub_url)
   jmf_subscribe = jmf_subscribe.replace("QUERYUUID",query_id)
-  data=mimeheader_jmf+jmf_subscribe+mimefooter
+  data=MIMEHEADERJMF+jmf_subscribe+MIMEFOOTER
   log("Data:\n%s"%data)
   try:
     response=requests.post(url=url,data=data,headers=headers)
@@ -190,14 +227,15 @@ def subscribe_resource (url, sub_url):
     return response
   # End subscribe_resource
 
-def unsubscribe_resource (url, sub_url):
+def unsubscribe_resource (url, sub_url, query_id):
   """Send an unsubscribe message to PRISMAsync with url, unsubscribes an earlier subscription
 
     Parameters:
     url: full link to printer jmf interface e.g. http://prismasync.lan:8010
     
     Returns:
-    
+      failed    : -1
+      succeeded : http response     
   """
   # Subscription JMF Messages
   # Create a jmf message to retrieve the queue status that Filters on job status, it is allowed to mention multiple job statuses   
@@ -211,7 +249,7 @@ def unsubscribe_resource (url, sub_url):
 """
   jmf_unsubscribe = jmf_unsubscribe.replace("SUBURL",sub_url)
   jmf_unsubscribe = jmf_unsubscribe.replace("QUERYUUID",query_id)
-  data=mimeheader_jmf+jmf_unsubscribe+mimefooter
+  data=MIMEHEADERJMF+jmf_unsubscribe+MIMEFOOTER
   log("Data:\n%s"%data)
   try:
     response=requests.post(url=url,data=data,headers=headers)
@@ -232,11 +270,11 @@ def getStatuscode(url):
         return -1
 
 ################### Defaults ########################################
-# Determine own ipaddress, it is needed to subscribe to PRISMAsync information
+# Determine own ipaddress, it is needed to define subscribe url send to PRISMAsync information
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
 IpAddress=s.getsockname()[0]
-query_id="anidofanquery"
+A_QUERY_ID="anidofanquery"
 defaultfilename="signal.xml"
 
 ################### Defaults ########################################
@@ -265,7 +303,17 @@ if getStatuscode(clargs.url) == -1:
    print("Cannot connect to PRISMAsync:%s" %clargs.url)
    exit()
 
-# The following table translates to how the user trays are shown in the created user interface
+# The following table translates to how the  trays are shown in the small user interface
+# Lx defines a label e.g. Tray-1Lx result in a label"Tray-1"
+# Mx corresponds to the Medianame in the tray, Ax corresponds to tje Amount of media in the Tray
+# The names in this layout should correspond to the actual names in the JMF replies
+#  As an example from imagePRESS V1350 KnownDevices Query:
+# <StringState Name="LocationName">
+#
+#      <Value AllowedValue="Tray-13" />
+#  ....
+# </StringState>
+
 TrayLayoutUI=[
            #   0            1             2               3            4              5               6             7              8 
           ["TrayLx-1",  "Media NameLx-1",  "AmountLx-1",  "TrayLx-2",   "Media NameLx-2",  "AmountLx-2",  "TrayLx-3",   "Media NameLx-3",  "AmountLx-3"], # 0
@@ -276,23 +324,13 @@ TrayLayoutUI=[
           ["Tray-5Lx",  "Tray-5Mx",   "Tray-5Ax",    "NA",         "NA",         "NA",          "NA",         "NA",         "NA"        ], # 5
           ["Tray-6Lx",  "Tray-6Mx",   "Tray-6Ax",    "NA",         "NA",         "NA",          "NA",         "NA",         "NA"        ]  # 6
         ]
-ColumnWidth = 17
-Font="Arial 16"
-# PlacementDesign=[
-#            #   0            1             2               3            4              5               6             7              8 
-#           ["TrayLx-1",  "MediaLx-1",  "AmountLx-1",  "TrayLx-2",   "MediaLx-2",  "AmountLx-2",  "TrayLx-3",   "MediaLx-3",  "AmountLx-3"],  # 0
-#           ["Tray-1Lx",  "Tray-1Mx",   "Tray-1Ax",    "Tray-11Lx",  "Tray-11Mx",  "Tray-11Ax",   "Tray-21Lx",  "Tray-21Mx",  "Tray-21Ax"],   # 1
-#           ["Tray-2Lx",  "Tray-2Mx",   "Tray-2Ax",    "Tray-12Lx",  "Tray-12Mx",  "Tray-12Ax",   "Tray-22Lx",  "Tray-22Mx",  "Tray-22Ax"],   # 2
-#           ["Tray-3Lx",  "Tray-3Mx",   "Tray-3Ax",    "Tray-13Lx",  "Tray-13Mx",  "Tray-13Ax",   "Tray-23Lx",  "Tray-23Mx",  "Tray-23Ax"],   # 3
-#           ["Tray-4Lx",  "Tray-4Mx",   "Tray-4Ax",    "NA",         "NA",         "NA",          "NA",         "NA",         "NA"],          # 4
-#           ["Tray-5Lx",  "Tray-5Mx",   "Tray-5Ax",    "NA",         "NA",         "NA",          "NA",         "NA",         "NA"],          # 5
-#           ["Tray-6Lx",  "Tray-6Mx",   "Tray-6Ax",    "NA",         "NA",         "NA",          "NA",         "NA",         "NA"]           # 6
-#         ]
+ColumnWidth = 12
+Font="Arial 11"
 
 
 UI_Grid=copy.deepcopy(TrayLayoutUI)
 TrayWindow=Tk()
-# Create Window containing tray information
+# Define a Window based on the layout described in TrayLayoutUI
 for x in range(len(TrayLayoutUI)):
   for y in range(len(TrayLayoutUI[x])):
     if "Lx" in TrayLayoutUI[x][y]:
@@ -307,31 +345,39 @@ Button(TrayWindow, text='Quit', command=TrayWindow.destroy).grid(row=8, column=1
 
 
 
-# form subscription url from parameters
+# Define subscription url (to send to PRISMAsync)  based on command line arguments
 subs_url="http://"+str(clargs.ip)+":"+str(clargs.port)
 log("Subscribe URL: %s"%subs_url)
-# subscribe to resources, PRISMAsync returns a result on a subscription request, wrate that to file
-result=subscribe_resource(clargs.url,subs_url)
+# subscribe to resources, PRISMAsync returns a result on a subscription request, write that result to file
+result=subscribe_resource(clargs.url,subs_url,A_QUERY_ID)
 
 # if subscription request successfull
 if result != -1:
   log("Subscribe successfull")
-# start web server
+  # Subscribed successfully, PRISMAsync will send signals for the subscribed information
+  # Start a web server to receive signals send by PRISMAsync  
   port = clargs.port
   try:
     httpd=http.server.ThreadingHTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
-  except:
-    unsubscribe_resource(clargs.url,subs_url)
+  except OSError as err:
+    print("OS error:", err)
     exit(-1)
+  except:
+    # When starting webserver fails: unsubscribe. If the JMF persistent channel is removed. PRISMAsync will keep using it.
+    unsubscribe_resource(clargs.url,subs_url,A_QUERY_ID)
+    exit(-1)
+  # Start HTTP server, run it in a separate thread 
   thread = threading.Thread(target=httpd.serve_forever)
   thread.daemon = True
-  # httpd = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
   log("Listening on port %s..." %port)
-  log("Writing signals to: "+clargs.file)
-  # httpd.serve_forever()
+  log("Writing signals to: "+clargs.file) 
   thread.start()
+
+  # Show the User interface
   TrayWindow.mainloop()
-  result=unsubscribe_resource(clargs.url,subs_url)
+
+  # When the user interface is closed, unsubscribe from resource query
+  result=unsubscribe_resource(clargs.url,subs_url,A_QUERY_ID)
 else:
     # Subscription failed
     print("Subscribed failed, check response file:%s" %response_file.completepath)
@@ -339,14 +385,20 @@ else:
       data = f.readlines()
     for line in data:
       if 'Comment' in line:
+        # Print reason for fail (as provided in comments by PRISMAsync)
         print(line)
-        break
-    
+        break 
+
+    # This script always uses the same subscription ID. Which means that if a subscription with that ID already exists,
+    # it is a "dangling" subscription from this  script: try to unsubscribe using the subscription ID and subscription ip address
+    # This might allow a subsequent subscription to succeed
     s=str(line)   
     try:
+      # If comment (fail reason) contains a URL, retrieve URL from error message
       subs_url=(s.split("URL ["))[1].split("]")[0]
     except:
-      exit (-1)
-    log("Unsubscribing: %s" %subs_url)
-    result=unsubscribe_resource(clargs.url,subs_url)
-    log("Unsubscrib result: \n %s" %result)
+      sys.exit (-1)
+    # Unsubscribe using url found in error message
+    log(f"Unsubscribing: {subs_url}")
+    result=unsubscribe_resource(clargs.url,subs_url,A_QUERY_ID)
+    log(f"Unsubscrib result: \n {result}")
