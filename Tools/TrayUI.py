@@ -58,6 +58,7 @@ class StatusFile:
         self.extension=Path(signalfile).suffix
         self.count=0
         self.increment=increment
+        self.completepath=Path()
 
     def write(self,datatowrite):
         if self.increment:
@@ -317,12 +318,12 @@ if getStatuscode(clargs.url) == -1:
 TrayLayoutUI=[
            #   0            1             2               3            4              5               6             7              8 
           ["TrayLx-1",  "Media NameLx-1",  "AmountLx-1",  "TrayLx-2",   "Media NameLx-2",  "AmountLx-2",  "TrayLx-3",   "Media NameLx-3",  "AmountLx-3"], # 0
-          ["Tray-1Lx",  "Tray-1Mx",   "Tray-1Ax",    "Tray-11Lx",  "Tray-11Mx",  "Tray-11Ax",   "Tray-21Lx",  "Tray-21Mx",  "Tray-21Ax" ], # 1
-          ["Tray-2Lx",  "Tray-2Mx",   "Tray-2Ax",    "Tray-12Lx",  "Tray-12Mx",  "Tray-12Ax",   "Tray-22Lx",  "Tray-22Mx",  "Tray-22Ax" ], # 2
-          ["Tray-3Lx",  "Tray-3Mx",   "Tray-3Ax",    "Tray-13Lx",  "Tray-13Mx",  "Tray-13Ax",   "Tray-23Lx",  "Tray-23Mx",  "Tray-23Ax" ], # 3
-          ["Tray-4Lx",  "Tray-4Mx",   "Tray-4Ax",    "NA",         "NA",         "NA",          "NA",         "NA",         "NA"        ], # 4
-          ["Tray-5Lx",  "Tray-5Mx",   "Tray-5Ax",    "NA",         "NA",         "NA",          "NA",         "NA",         "NA"        ], # 5
-          ["Tray-6Lx",  "Tray-6Mx",   "Tray-6Ax",    "NA",         "NA",         "NA",          "NA",         "NA",         "NA"        ]  # 6
+          ["NA",         "NA",         "NA",         "Tray-11Lx",  "Tray-11Mx",  "Tray-11Ax",   "Tray-21Lx",  "Tray-21Mx",  "Tray-21Ax" ], # 1
+          ["NA",         "NA",         "NA",         "Tray-12Lx",  "Tray-12Mx",  "Tray-12Ax",   "Tray-22Lx",  "Tray-22Mx",  "Tray-22Ax" ], # 2
+          ["Tray-1Lx",  "Tray-1Mx",   "Tray-1Ax",    "Tray-13Lx",  "Tray-13Mx",  "Tray-13Ax",   "Tray-23Lx",  "Tray-23Mx",  "Tray-23Ax" ], # 3
+          ["NA",         "NA",         "NA",         "NA",         "NA",         "NA",          "NA",         "NA",         "NA"        ], # 4
+          ["NA",         "NA",         "NA",         "NA",         "NA",         "NA",          "NA",         "NA",         "NA"        ], # 5
+          ["NA",         "NA",         "NA",         "NA",         "NA",         "NA",          "NA",         "NA",         "NA"        ]  # 6
         ]
 ColumnWidth = 12
 Font="Arial 11"
@@ -332,15 +333,15 @@ UI_Grid=copy.deepcopy(TrayLayoutUI)
 TrayWindow=Tk()
 # Define a Window based on the layout described in TrayLayoutUI
 for x in range(len(TrayLayoutUI)):
-  for y in range(len(TrayLayoutUI[x])):
-    if "Lx" in TrayLayoutUI[x][y]:
-      Label(TrayWindow, text=TrayLayoutUI[x][y].split('L', 1)[0], font=Font).grid(row=x, column=y)
-    elif "Mx" in TrayLayoutUI[x][y]:
-      UI_Grid[x][y] = Entry(TrayWindow,width=ColumnWidth, font=Font)
-      UI_Grid[x][y].grid(row=x, column=y)
-    elif "Ax" in TrayLayoutUI[x][y]:
-      UI_Grid[x][y] = Entry(TrayWindow, width=ColumnWidth, font=Font)
-      UI_Grid[x][y].grid(row=x, column=y)
+    for y in range(len(TrayLayoutUI[x])):
+      if "Lx" in TrayLayoutUI[x][y]:
+        Label(TrayWindow, text=TrayLayoutUI[x][y].split('L', 1)[0], font=Font).grid(row=x, column=y)
+      elif "Mx" in TrayLayoutUI[x][y]:
+        UI_Grid[x][y] = Entry(TrayWindow,width=ColumnWidth, font=Font)
+        UI_Grid[x][y].grid(row=x, column=y)
+      elif "Ax" in TrayLayoutUI[x][y]:
+        UI_Grid[x][y] = Entry(TrayWindow, width=ColumnWidth, font=Font)
+        UI_Grid[x][y].grid(row=x, column=y)
 Button(TrayWindow, text='Quit', command=TrayWindow.destroy).grid(row=8, column=1, sticky=W, pady=4)
 
 
