@@ -4,3 +4,5 @@ chardet
 idna
 requests
 urllib3
+tk
+numpypi
