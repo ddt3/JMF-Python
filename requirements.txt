@@ -5,4 +5,5 @@ idna
 requests
 urllib3
 tk
+pathlib
 numpypi
