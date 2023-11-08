@@ -1,4 +1,4 @@
-# Python Examples V1.0
+# Python Examples V1.1
 ## Introduction
 These files have been created to serve as examples of how JMF/JDF can be used to manage jobs on PRISMAsync. These files are provided "as is". This means that e.g. performance, error handling, input validation have not been a priority.  The examples have been written in Python3 because of the readability and availability of this language.
 
@@ -7,27 +7,39 @@ A version of Python3 can be downloaded here: https://www.python.org/downloads/
 For Windows: Run the downloaded Python installer and make sure to check "Add Python 3.x to PATH" 
 
 ### Configuration
-Some Python packages need to be installed before you can use these examples. To install the needed pacakges, run:
+Some Python packages need to be installed before you can use these examples. 
 
-```python -m pip install -r requirements.txt --user```
+It is recommended to use a virtual environment in Python. More information on virtual environments can be found here: https://realpython.com/python-virtual-environments-a-primer/
+<br>The following powershell commands will create a virtual environment in the current directory and then activate it :
+``` 
+python -m venv .venv
+.\.venv\Scripts\activate.ps1
+```
 
-When behind a proxy use e.g.:
+To install the needed python pacakges, run:
 
-```python -m pip install -r requirements.txt --proxy http://proxy.oce.net:81 --user```
+```python -m pip install -r requirements.txt --find-links ./imports```
+
+OR, when behind a proxy use e.g.:
+
+```python -m pip install -r requirements.txt --find-links ./imports --proxy http://proxy.server.net:81```
 
 ### Check installation
 If everything is working properly, you should be able to run the following command:
 
 ```python CreateMimePackage.py```
+
 It should create a mime package without error messages
 
-## Usage
-All the routines that can be used for JMF communication can be found in:
-jmfjdf/jmfmessages.py 
-```import jmfjdf.jmfmessages```
+## Included scripts
+Included python scripts have been divided into 3 groups: Tools, Tests, Demos
 
-A detailed description of the jmfmessages module can be generated using python:
-```python -m pydoc -w jmfjdf.jmfmessages```
+### Tools
+Tools contains 3 scripts that 
+
+## Interface
+A detailed description of the prismasyncjmfjdf module can be generated using python:
+```python -m pydoc -w prismasyncjmfjdf```
 It will generate the html documentation based on the information in the module.
 
 ### Examples

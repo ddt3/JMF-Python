@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: package prismasyncjmfjdf</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title">prismasyncjmfjdf</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:c%3A%5Cworkspaces%5Crepos%5Cjmf-python%5C.venv%5Clib%5Csite-packages%5Cprismasyncjmfjdf%5C__init__.py">c:\workspaces\repos\jmf-python\.venv\lib\site-packages\prismasyncjmfjdf\__init__.py</a></td></tr></table>
+    <p></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Package Contents</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="prismasyncjmfjdf.jmfmessages.html">jmfmessages</a><br>
+</td><td class="multicolumn"><a href="prismasyncjmfjdf.prismasyncjmfjdf.html">prismasyncjmfjdf</a><br>
+</td><td class="multicolumn"></td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+    
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-CreateMimePackage"><strong>CreateMimePackage</strong></a>(jmf_file, jdf_file, pdf_url)</dt><dd><span class="code">Creates&nbsp;a&nbsp;mime&nbsp;pacakge&nbsp;from&nbsp;the&nbsp;provided&nbsp;files<br>
+&nbsp;<br>
+Parameters:<br>
+jmf_file:&nbsp;Path&nbsp;to&nbsp;jmf&nbsp;file&nbsp;(first&nbsp;file&nbsp;in&nbsp;mime)<br>
+jdf_file:&nbsp;Path&nbsp;to&nbsp;jdf&nbsp;file&nbsp;(second&nbsp;file&nbsp;in&nbsp;mime)<br>
+pdf_url:&nbsp;&nbsp;Url&nbsp;to&nbsp;PDF&nbsp;file.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;use&nbsp;file://&nbsp;url&nbsp;to&nbsp;base64&nbsp;encode&nbsp;the&nbsp;PDF&nbsp;and&nbsp;add&nbsp;it&nbsp;to&nbsp;the&nbsp;mime&nbsp;package&nbsp;(third&nbsp;file&nbsp;in&nbsp;mime)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;all&nbsp;other&nbsp;cases&nbsp;the&nbsp;pdf_url&nbsp;will&nbsp;be&nbsp;used&nbsp;for&nbsp;JDF&nbsp;FileSpec&nbsp;URL<br>
+Returns:<br>
+Filename&nbsp;of&nbsp;created&nbsp;mime&nbsp;package</span></dd></dl>
+ <dl><dt><a name="-RemoveQueueEntries"><strong>RemoveQueueEntries</strong></a>(url, **kwargs)</dt><dd><span class="code">Removes&nbsp;all&nbsp;queue&nbsp;entries&nbsp;with&nbsp;the&nbsp;given&nbsp;states&nbsp;or&nbsp;removes&nbsp;a&nbsp;specific&nbsp;queue&nbsp;entry&nbsp;id<br>
+&nbsp;<br>
+Parameters:<br>
+url:&nbsp;full&nbsp;link&nbsp;to&nbsp;printer&nbsp;jmf&nbsp;interface&nbsp;e.g.&nbsp;<a href="http://prismasync.lan:8010">http://prismasync.lan:8010</a><br>
+status:&nbsp;String&nbsp;of&nbsp;job&nbsp;states.&nbsp;Jobs&nbsp;in&nbsp;this&nbsp;state&nbsp;will&nbsp;be&nbsp;removed:&nbsp;(e.g.&nbsp;"Completed&nbsp;Aborted")<br>
+&nbsp;<br>
+Returns:<br>
+int:Number&nbsp;of&nbsp;removed&nbsp;queueentries</span></dd></dl>
+ <dl><dt><a name="-ReturnQueueEntries"><strong>ReturnQueueEntries</strong></a>(url, status)</dt><dd><span class="code">Return&nbsp;all&nbsp;queue&nbsp;entries&nbsp;with&nbsp;the&nbsp;given&nbsp;states<br>
+&nbsp;<br>
+Parameters:<br>
+url:&nbsp;full&nbsp;link&nbsp;to&nbsp;printer&nbsp;jmf&nbsp;interface&nbsp;e.g.&nbsp;<a href="http://prismasync.lan:8010">http://prismasync.lan:8010</a><br>
+status:&nbsp;states&nbsp;that&nbsp;need&nbsp;to&nbsp;be&nbsp;reported&nbsp;(e.g.&nbsp;"Completed&nbsp;Aborted")&nbsp;use&nbsp;"&nbsp;"&nbsp;to&nbsp;not&nbsp;filter&nbsp;at&nbsp;all&nbsp;and&nbsp;receive&nbsp;all&nbsp;queue&nbsp;entries<br>
+&nbsp;<br>
+Returns:<br>
+array&nbsp;of&nbsp;QueueEntryIDs</span></dd></dl>
+ <dl><dt><a name="-SendJob"><strong>SendJob</strong></a>(url, pdfurl, *jdf_file_param)</dt><dd><span class="code">Sends&nbsp;a&nbsp;job&nbsp;to&nbsp;the&nbsp;given&nbsp;url<br>
+&nbsp;<br>
+Parameters:<br>
+url:&nbsp;full&nbsp;link&nbsp;to&nbsp;printer&nbsp;jmf&nbsp;interface&nbsp;e.g.&nbsp;<a href="http://prismasync.lan:8010">http://prismasync.lan:8010</a><br>
+pdf:&nbsp;URL&nbsp;for&nbsp;PDF&nbsp;file&nbsp;to&nbsp;be&nbsp;send&nbsp;(either&nbsp;file:&nbsp;or&nbsp;http:&nbsp;URL&nbsp;)<br>
+optional:&nbsp;path&nbsp;to&nbsp;JDF&nbsp;file,&nbsp;if&nbsp;this&nbsp;parameter&nbsp;is&nbsp;not&nbsp;provided&nbsp;,&nbsp;Template.jdf&nbsp;is&nbsp;used.<br>
+&nbsp;<br>
+Returns:<br>
+id:QueueEntryID&nbsp;of&nbsp;submitted&nbsp;job</span></dd></dl>
+ <dl><dt><a name="-SendMime"><strong>SendMime</strong></a>(url, mime_file)</dt><dd><span class="code">Sends&nbsp;a&nbsp;mime&nbsp;file&nbsp;to&nbsp;the&nbsp;given&nbsp;url<br>
+&nbsp;<br>
+Parameters:<br>
+url:&nbsp;Full&nbsp;link&nbsp;to&nbsp;printer&nbsp;jmf&nbsp;interface&nbsp;e.g.&nbsp;<a href="http://prismasync.lan:8010">http://prismasync.lan:8010</a><br>
+mime_file:&nbsp;Path&nbsp;to&nbsp;mime&nbsp;file&nbsp;mime&nbsp;(containing&nbsp;JMF,JDF&nbsp;and&nbsp;optionally&nbsp;a&nbsp;PDF).<br>
+&nbsp;<br>
+Returns:<br>
+id:QueueEntryID&nbsp;of&nbsp;submitted&nbsp;job</span></dd></dl>
+ <dl><dt><a name="-read_jmfjdf"><strong>read_jmfjdf</strong></a>(message_file)</dt><dd><span class="code">Read&nbsp;a&nbsp;jmf&nbsp;or&nbsp;jdf&nbsp;file&nbsp;from&nbsp;disk&nbsp;into&nbsp;a&nbsp;string<br>
+&nbsp;<br>
+Parameters:<br>
+Filename<br>
+&nbsp;<br>
+Returns:<br>
+string:Content&nbsp;of&nbsp;file</span></dd></dl>
+ <dl><dt><a name="-read_pdf"><strong>read_pdf</strong></a>(pdf_file)</dt><dd><span class="code">Read&nbsp;a&nbsp;jmf&nbsp;or&nbsp;jdf&nbsp;file&nbsp;from&nbsp;disk&nbsp;into&nbsp;a&nbsp;string<br>
+&nbsp;<br>
+Parameters:<br>
+Filename<br>
+&nbsp;<br>
+Returns:<br>
+string:Content&nbsp;of&nbsp;file</span></dd></dl>
+</td></tr></table><p>
+<table class="section">
+<tr class="decor data-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Data</strong></td></tr>
+    
+<tr><td class="decor data-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><strong>__all__</strong> = ['CreateMimePackage', 'RemoveQueueEntries', 'ReturnQueueEntries', 'SendJob', 'SendMime', 'basepath', 'example_job', 'jdf_template', 'jmf_QueueStatus_msg', 'jmf_RemoveQueueEntry_msg', 'jmf_SubmitQueueEntry_msg', 'mimefooter', 'mimeheader_jdf', 'mimeheader_jmf', 'mimeheader_pdf', 'read_jmfjdf', 'read_pdf']<br>
+<strong>basepath</strong> = WindowsPath('C:/Users/hdok/OneDrive - Canon Prod...Python/.venv/Lib/site-packages/prismasyncjmfjdf')<br>
+<strong>example_job</strong> = 'cid:Job1.pdf'<br>
+<strong>jdf_template</strong> = WindowsPath('C:/Users/hdok/OneDrive - Canon Prod...Lib/site-packages/prismasyncjmfjdf/Template.jdf')<br>
+<strong>jmf_QueueStatus_msg</strong> = WindowsPath('C:/Users/hdok/OneDrive - Canon Prod.../site-packages/prismasyncjmfjdf/QueueStatus.jmf')<br>
+<strong>jmf_RemoveQueueEntry_msg</strong> = WindowsPath('C:/Users/hdok/OneDrive - Canon Prod...-packages/prismasyncjmfjdf/RemoveQueueEntry.jmf')<br>
+<strong>jmf_SubmitQueueEntry_msg</strong> = WindowsPath('C:/Users/hdok/OneDrive - Canon Prod...-packages/prismasyncjmfjdf/SubmitQueueEntry.jmf')<br>
+<strong>mimefooter</strong> = '<span class="repr">\n</span>--I_Love_PRISMAsync--'<br>
+<strong>mimeheader_jdf</strong> = '<span class="repr">\n</span>--I_Love_PRISMAsync<span class="repr">\n</span>Content-ID: part2@PRISMAsyn...-disposition: attachment; filename="Ticket.jdf"<span class="repr">\n\n</span>'<br>
+<strong>mimeheader_jmf</strong> = 'MIME-Version: 1.0<span class="repr">\n</span>Content-Type: multipart/relate...r-encoding:7bit<span class="repr">\n</span>Content-Disposition: attachment<span class="repr">\n\n</span>'<br>
+<strong>mimeheader_pdf</strong> = '<span class="repr">\n</span>--I_Love_PRISMAsync<span class="repr">\n</span>Content-ID: part3@PRISMAsyn...tent-Disposition: attachment; filename=Job1.pdf<span class="repr">\n\n</span>'</td></tr></table>
+</body></html>

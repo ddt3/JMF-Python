@@ -1,8 +1,5 @@
 {
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": false,
-    "python.linting.pylamaEnabled": false,
-    "python.linting.banditEnabled": false,
     "linter.enabled": true,
-    "terminal.integrated.defaultProfile.windows": "PowerShell"
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "pylint.args" : ["--rcfile=${workspaceFolder}/.vscode/pylintrc"],
 }

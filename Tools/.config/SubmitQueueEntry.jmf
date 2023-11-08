@@ -1,0 +1,8 @@
+<JMF TimeStamp="2020-06-19T12:09:38-07:00" Version="1.4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.CIP4.org/JDFSchema_1_1">
+    <Command ID="Submit-Job-PRISMAsync" Type="SubmitQueueEntry">
+        <QueueSubmissionParams URL="REPLACE_URL">
+            <QueueFilter QueueEntryDetails="None" MaxEntries="1" >
+            </QueueFilter>
+        </QueueSubmissionParams>
+    </Command>
+</JMF>

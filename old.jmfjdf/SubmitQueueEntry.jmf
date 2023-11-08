@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<JMF TimeStamp="2020-06-19T12:09:38-07:00" SenderID="Sender1" Version="1.4"
+    xsi:schemaLocation="http://www.CIP4.org/JDFSchema_1_1 http://schema.cip4.org/jdfschema_1_3/JDF.xsd"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.CIP4.org/JDFSchema_1_1">
+    <Command ID="Submit-Job-PRISMAsync" Type="SubmitQueueEntry">
+        <QueueSubmissionParams URL="https://ubuntu-hdok.ocevenlo.oce.net/jdf/test.jdf"/>
+    </Command>
+</JMF>

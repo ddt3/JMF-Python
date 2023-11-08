@@ -6,4 +6,5 @@ requests
 urllib3
 tk
 pathlib
-numpypi
+numpy
+prismasyncjmfjdf

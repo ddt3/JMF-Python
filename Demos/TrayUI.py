@@ -1,4 +1,3 @@
-# pylint: disable=line-too-long, invalid-name
 """This example does not need the jmfpython library , but parts of it are reused. 
 The following steps are performed:
 1) A JMF message is sent to subscribe to tesource information of media in the trays (library requests)
@@ -50,32 +49,32 @@ class StatusFile:
     create folder if it does not exist
     """
 
-    def __init__(self, signalfile, increment):
-        self.logdir = BASEPATH.joinpath("_received")
+    def __init__(self, SignalFile, Increment):
+        self.LogDir = BASEPATH.joinpath("_received")
         # create folder if it does not exist
-        self.logdir.mkdir(parents=True, exist_ok=True)
-        self.basename = Path(signalfile).stem
-        self.extension = Path(signalfile).suffix
-        self.count = 0
-        self.increment = increment
-        self.completepath = Path()
+        self.LogDir.mkdir(parents=True, exist_ok=True)
+        self.BaseName = Path(SignalFile).stem
+        self.Extension = Path(SignalFile).suffix
+        self.Count = 0
+        self.Increment = Increment
+        self.CompletePath = Path()
 
-    def write(self, datatowrite):
+    def Write(self, DataToWrite):
         """This method is used to write the received signal to a file. The file name is generated based on the signal name."""
-        if self.increment:
-            filename = self.basename + "-" + str(self.count) + self.extension
-            self.count += 1
+        if self.Increment:
+            FileName = self.BaseName + "-" + str(self.Count) + self.Extension
+            self.Count += 1
         else:
-            filename = self.basename + self.extension
-        self.completepath = Path(self.logdir.joinpath(filename))
-        with open(self.completepath, "wb") as writef:
-            writef.write(datatowrite)
+            FileName = self.BaseName + self.Extension
+        self.CompletePath = Path(self.LogDir.joinpath(FileName))
+        with open(self.CompletePath, "wb") as WriteF:
+            WriteF.write(DataToWrite)
 
 
 class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     """The web server that is used to handle http post requests. It needs to be running in the background to receive PRISMAsync signals"""
 
-    #pylint: disable=arguments-differ
+    #pylint: disable=arguments-differ,invalid-name
     def log_request(self, logformat, *args):
         """This method overrides the default log_request method. To make sure to only log when debugging is turned on"""
         if clargs.debug:
@@ -83,7 +82,7 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     #pylint: enable=arguments-differ
     def do_GET(self):
         """This method is called when the web server receives a GET request"""	
-        log("in GET")
+        Log("in GET")
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"Hello, world!")
@@ -96,14 +95,14 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         #     global TrayWindow, UI_Grid
         #     global response_file
 
-        log("in POST")
+        Log("in POST")
         content_length = int(self.headers["Content-Length"])
         body = self.rfile.read(content_length)
         self.send_response(200)
         self.end_headers()
         # you can do anything with the body, even save it ot disk :)
         # for now, just use time in milisec to make sure the file name is unique
-        clear(TrayWindow)
+        Clear(TrayWindow)
 
         root = xml.dom.minidom.parseString(body)
 
@@ -138,19 +137,20 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                             if TrayMedia in cellj:
                                 UI_Grid[i][j].insert(0, Amount)
 
-        response_file.write(body)
+        Response_File.Write(body)
         TrayWindow.update()
+    #pylint: enable=invalid-name
 
 
 ################### Function definitions ############################
 
 
-def PointsToPaperSize(dim):
+def PointsToPaperSize(Dim):
     """Return a paper size based on the dimensions of the media in points"""
-    numsplit = dim.split(" ", 1)
-    width = round(float(numsplit[0]))
-    height = round(float(numsplit[1]))
-    sizes = {
+    NumSplit = Dim.split(" ", 1)
+    Width = round(float(NumSplit[0]))
+    Height = round(float(NumSplit[1]))
+    Sizes = {
         "Ledger"    : (1224, 792),
         "SRA3"      : (907, 1276),
         "RA3"       : (865, 1219),
@@ -166,32 +166,32 @@ def PointsToPaperSize(dim):
         "A6"        : (297, 421),
     }
 
-    for size, dimensions in sizes.items():
-        if width == dimensions[0] and height == dimensions[1]:
-            return size
+    for Size, Dimensions in Sizes.items():
+        if Width == Dimensions[0] and Height == Dimensions[1]:
+            return Size
 
-    return str(width) + "pt x " + str(height) + "pt"
+    return str(Width) + "pt x " + str(Height) + "pt"
 
 
-def log(debugs):
+def Log(DebugS):
     """Write debug information if requested."""
     if clargs.debug:
-        print(debugs)
+        print(DebugS)
 
 
-def clear(root):
+def Clear(Root):
     """Clear the user interface:
     Remove all information from Entry fields in a Window
     """
-    for widget in root.winfo_children():
-        if not isinstance(widget, Entry):
-            clear(widget)
-        elif isinstance(widget, Entry):
-            widget.delete(0, END)
+    for Widget in Root.winfo_children():
+        if not isinstance(Widget, Entry):
+            Clear(Widget)
+        elif isinstance(Widget, Entry):
+            Widget.delete(0, END)
 
 
 
-def subscribe_resource(url, sub_url, query_id):
+def SubscribeResource(Url, SubUrl, QueryID):
     """Send a subscription message to PRISMAsync with url, subscribes to information using own ipaddress
 
     Parameters:
@@ -204,7 +204,7 @@ def subscribe_resource(url, sub_url, query_id):
     """
     # Subscription JMF Messages
     # Create a jmf message to retrieve the queue status that Filters on job status, it is allowed to mention multiple job statuses
-    jmf_subscribe = """<?xml version="1.0" encoding="UTF-8"?>
+    JmfSubscribe = """<?xml version="1.0" encoding="UTF-8"?>
 <JMF SenderID="Me" Version="1.3" TimeStamp="INF" xmlns="http://www.CIP4.org/JDFSchema_1_1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.CIP4.org/JDFSchema_1_1 http://schema.cip4.org/jdfschema_1_3/JDF.xsd">
 <Query ID="QUERYUUID" Type="Resource" xsi:type="QueryResource">
       <Subscription URL="SUBURL"/>
@@ -212,30 +212,30 @@ def subscribe_resource(url, sub_url, query_id):
 </Query>
 </JMF>
 """
-    jmf_subscribe = jmf_subscribe.replace("SUBURL", sub_url)
-    jmf_subscribe = jmf_subscribe.replace("QUERYUUID", query_id)
-    datam = MIMEHEADERJMF + jmf_subscribe + MIMEFOOTER
-    log(f"Data:\n{datam}")
+    JmfSubscribe = JmfSubscribe.replace("SUBURL", SubUrl)
+    JmfSubscribe = JmfSubscribe.replace("QUERYUUID", QueryID)
+    DataM = MIMEHEADERJMF + JmfSubscribe + MIMEFOOTER
+    Log(f"Data:\n{DataM}")
     try:
-        response = requests.post(url=url, data=datam, headers=HEADERS, timeout=30)
+        Response = requests.post(url=Url, data=DataM, headers=HEADERS, timeout=30)
     except requests.exceptions.RequestException:
-        print("Unexpected reply from", url)
+        print("Unexpected reply from", Url)
         print(sys.exc_info()[0], "occurred.")
         return -1
 
-    reply = response.content
-    textreply = reply.decode()
-    subx = textreply.find("Subscription request denied")
-    response_file.write(reply)
+    Reply = Response.content
+    TextReply = Reply.decode()
+    SubX = TextReply.find("Subscription request denied")
+    Response_File.Write(Reply)
 
-    if subx != -1:
+    if SubX != -1:
         return -1
     else:
-        return response
+        return Response
     # End subscribe_resource
 
 
-def unsubscribe_resource(url, sub_url, query_id):
+def UnsubscribeResource(Url, SubUrl, QueryID):
     """Send an unsubscribe message to PRISMAsync with url, unsubscribes an earlier subscription
 
     Parameters:
@@ -248,47 +248,47 @@ def unsubscribe_resource(url, sub_url, query_id):
     # Subscription JMF Messages
     # Create a jmf message to retrieve the queue status that Filters on job status, it is allowed to mention multiple job statuses
 
-    jmf_unsubscribe = """<?xml version="1.0" encoding="UTF-8"?>
+    JMFUnsubscribe = """<?xml version="1.0" encoding="UTF-8"?>
 <JMF SenderID="Me" Version="1.3" TimeStamp="INF" xmlns="http://www.CIP4.org/JDFSchema_1_1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.CIP4.org/JDFSchema_1_1 http://schema.cip4.org/jdfschema_1_3/JDF.xsd">
   <Command ID="ALCES_AYGJAJ_9_20221220100059" Type="StopPersistentChannel" xsi:type="CommandStopPersistentChannel">
     <StopPersChParams URL="SUBURL" />
   </Command>
 </JMF>
 """
-    jmf_unsubscribe = jmf_unsubscribe.replace("SUBURL", sub_url)
-    jmf_unsubscribe = jmf_unsubscribe.replace("QUERYUUID", query_id)
-    datam = MIMEHEADERJMF + jmf_unsubscribe + MIMEFOOTER
-    log(f"Data:\n{datam}")
+    JMFUnsubscribe = JMFUnsubscribe.replace("SUBURL", SubUrl)
+    JMFUnsubscribe = JMFUnsubscribe.replace("QUERYUUID", QueryID)
+    DataM = MIMEHEADERJMF + JMFUnsubscribe + MIMEFOOTER
+    Log(f"Data:\n{DataM}")
     try:
-        response = requests.post(url=url, data=datam, headers=HEADERS, timeout=30)
+        Response = requests.post(url=Url, data=DataM, headers=HEADERS, timeout=30)
     except requests.exceptions.RequestException:
-        print("Unexpected reply from", url)
+        print("Unexpected reply from", Url)
         print(sys.exc_info()[0], "occurred.")
         return -1
-    reply = response.content
+    Reply = Response.content
 
-    response_file.write(reply)  # End subscribe_resource
+    Response_File.Write(Reply)  # End subscribe_resource
 
 
-def getStatuscode(url):
+def GetStatusCode(Url):
     """Get the network status code when trying to connect to provided PRISMAsync URL. This can serve as a check for the connection status"""
     ConnectionTimeout = 2
     try:
-        r = requests.get(
-            url, timeout=ConnectionTimeout
+        Req = requests.get(
+            Url, timeout=ConnectionTimeout
         )  # it is faster to only request the header
-        return r.status_code
+        return Req.status_code
     except requests.exceptions.RequestException:
         return -1
 
 
 ################### Defaults ########################################
 # Determine own ipaddress, it is needed to define subscribe url send to PRISMAsync information
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
-IpAddress = s.getsockname()[0]
+S = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+S.connect(("8.8.8.8", 80))
+IpAddress = S.getsockname()[0]
 A_QUERY_ID = "anidofanquery"
-defaultfilename = "signal.xml"
+DEFAULTFILENAME = "signal.xml"
 
 ################### Defaults ########################################
 # Parse command line arguments and generate help information
@@ -309,9 +309,9 @@ parser.add_argument(
 parser.add_argument(
     "--file",
     type=str,
-    default=defaultfilename,
+    default=DEFAULTFILENAME,
     help="Provide filename for JDF ticket used for submissiuon (default: "
-    + defaultfilename
+    + DEFAULTFILENAME
     + ")",
 )
 parser.add_argument(
@@ -321,17 +321,22 @@ parser.add_argument(
     "--debug",
     "-d",
     action="store_true",
-    help="Do not print any output just subscribe and write to " + defaultfilename,
+    help="Do not print any output just subscribe and write to " + DEFAULTFILENAME,
 )
 clargs = parser.parse_args()
+if clargs.url is None:
+    parser.print_help(sys.stderr)
+    print("\nProvide a printer url using: --url URL\n")
+    exit(-1)
 
-log(f"Ip-address of this system: {IpAddress}")
+
+Log(f"Ip-address of this system: {IpAddress}")
 
 
-response_file = StatusFile(clargs.file, clargs.inc)
+Response_File = StatusFile(clargs.file, clargs.inc)
 
 ### first check if it is possible to connect to PRISMAsync
-if getStatuscode(clargs.url) == -1:
+if GetStatusCode(clargs.url) == -1:
     print(f"Cannot connect to PRISMAsync:{clargs.url}")
     exit()
 
@@ -352,9 +357,9 @@ TrayLayoutUI=np.genfromtxt(uitable, delimiter=";", dtype=str, comments='#').toli
 
 
 
-ColumnWidthM = 30
-ColumnWidthA = 5
-Font = "Arial 11"
+COLUMNWIDTHM = 30
+COLUMNWIDTHA = 5
+FONT = "Arial 11"
 
 UI_Grid = copy.deepcopy(TrayLayoutUI)
 TrayWindow = Tk()
@@ -362,14 +367,14 @@ TrayWindow = Tk()
 for x, row in enumerate(TrayLayoutUI):
     for y, cell in enumerate(row):
         if "Lx" in cell:
-            Label(TrayWindow, text=cell.split("L", 1)[0], font=Font).grid(
+            Label(TrayWindow, text=cell.split("L", 1)[0], font=FONT).grid(
                 row=x, column=y
             )
         elif "Mx" in cell:
-            UI_Grid[x][y] = Entry(TrayWindow, width=ColumnWidthM, font=Font)
+            UI_Grid[x][y] = Entry(TrayWindow, width=COLUMNWIDTHM, font=FONT)
             UI_Grid[x][y].grid(row=x, column=y)
         elif "Ax" in cell:
-            UI_Grid[x][y] = Entry(TrayWindow, width=ColumnWidthA, font=Font)
+            UI_Grid[x][y] = Entry(TrayWindow, width=COLUMNWIDTHA, font=FONT)
             UI_Grid[x][y].grid(row=x, column=y)
 
 Button(TrayWindow, text="Quit", command=TrayWindow.destroy).grid(
@@ -378,14 +383,14 @@ Button(TrayWindow, text="Quit", command=TrayWindow.destroy).grid(
 
 
 # Define subscription url (to send to PRISMAsync)  based on command line arguments
-subs_url = "http://" + str(clargs.ip) + ":" + str(clargs.port)
-log(f"Subscribe URL: {subs_url}")
+SUBSURL = "http://" + str(clargs.ip) + ":" + str(clargs.port)
+Log(f"Subscribe URL: {SUBSURL}")
 # subscribe to resources, PRISMAsync returns a result on a subscription request, write that result to file
-result = subscribe_resource(clargs.url, subs_url, A_QUERY_ID)
+Result = SubscribeResource(clargs.url, SUBSURL, A_QUERY_ID)
 
 # if subscription request successfull
-if result != -1:
-    log("Subscribe successfull")
+if Result != -1:
+    Log("Subscribe successfull")
     # Subscribed successfully, PRISMAsync will send signals for the subscribed information
     # Start a web server to receive signals send by PRISMAsync
     port = clargs.port
@@ -400,43 +405,43 @@ if result != -1:
         exit(-1)
     except:
         # When starting webserver fails: unsubscribe. If the JMF persistent channel is removed. PRISMAsync will keep using it.
-        unsubscribe_resource(clargs.url, subs_url, A_QUERY_ID)
+        UnsubscribeResource(clargs.url, SUBSURL, A_QUERY_ID)
         exit(-1)
     # pylint: enable=bare-except
     # Start HTTP server, run it in a separate thread
     thread = threading.Thread(target=httpd.serve_forever)
     thread.daemon = True
-    log(f"Listening on port {port}...")
-    log(f"Writing signals to: {clargs.file}")
+    Log(f"Listening on port {port}...")
+    Log(f"Writing signals to: {clargs.file}")
     thread.start()
 
     # Show the User interface
     TrayWindow.mainloop()
 
     # When the user interface is closed, unsubscribe from resource query
-    result = unsubscribe_resource(clargs.url, subs_url, A_QUERY_ID)
+    Result = UnsubscribeResource(clargs.url, SUBSURL, A_QUERY_ID)
 else:
     # Subscription failed
     print("Subscribed failed, check response file:{response_file.completepath}")
-    with open(response_file.completepath, "rt", encoding="utf-8") as f:
+    with open(Response_File.CompletePath, "rt", encoding="utf-8") as f:
         data = f.readlines()
-    line=""
-    for line in data:
-        if "Comment" in line:
+    Line=""
+    for Line in data:
+        if "Comment" in Line:
             # Print reason for fail (as provided in comments by PRISMAsync)
-            print(line)
+            print(Line)
             break
 
     # This script always uses the same subscription ID. Which means that if a subscription with that ID already exists,
     # it is a "dangling" subscription from this  script: try to unsubscribe using the subscription ID and subscription ip address
     # This might allow a subsequent subscription to succeed
     try:
-        s = str(line)
+        S = str(Line)
         # If comment (fail reason) contains a URL, retrieve URL from error message
-        subs_url = (s.split("URL ["))[1].split("]")[0]
+        SUBSURL = (S.split("URL ["))[1].split("]")[0]
     finally :
         sys.exit(-1)
     # Unsubscribe using url found in error message
-    log(f"Unsubscribing: {subs_url}")
-    result = unsubscribe_resource(clargs.url, subs_url, A_QUERY_ID)
-    log(f"Unsubscrib result: \n {result}")
+    Log(f"Unsubscribing: {SUBSURL}")
+    Result = UnsubscribeResource(clargs.url, SUBSURL, A_QUERY_ID)
+    Log(f"Unsubscrib result: \n {Result}")
