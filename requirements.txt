@@ -7,4 +7,4 @@ urllib3
 tk
 pathlib
 numpy
-prismasyncjmfjdf
+prismasyncjmfjdf @ https://github.com/ddt3/prismasyncjmfjdf/releases/latest/download/prismasyncjmfjdf.tar.gz
