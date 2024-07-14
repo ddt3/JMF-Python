@@ -1,8 +1,8 @@
 """
 SendJob is een example of how the libraries can be used to submit jobs to PRISMAsync  
 """
-from prismasyncjmfjdf import CreateMimePackage, SendJob, SendMime
 from pathlib import Path
+from prismasyncjmfjdf import CreateMimePackage, SendJob, SendMime
 
 # First determine path of *this* file
 basepath=Path(__file__).resolve().parent
