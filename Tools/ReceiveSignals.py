@@ -1,9 +1,8 @@
 """This example does not need the jmfpython library , but parts of it are reused. 
 The following steps are performed:
-1) A JMF message is sent to subscribe to tesource information of media in the trays (library requests)
-2) A Webserver is started to receive the signals that are send by PRISMAsync  (library http.server)
-3) The information from these signals is interpreted (library xml.com.minidom)
-4) A user interface is filled with the information from step 4 (library tkinter), media name, media size and media weight is shown
+1) A Webserver is started to receive the signals that are send by PRISMAsync  (library http.server)
+2) When a signal is received, it is written to a file.
+3) A user interface shows information on number of signals received, port in use etc.
 
 This simple example could be used as a starting point for workflows based on jmf subscriptions
 """
@@ -92,23 +91,45 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 class PRISMAsyncSignalReceiverUI:
     def __init__(self, number_of_signals, port_in_use, file_in_use):
-        self.main_window = Tk()
+        """
+        Initialize the PRISMAsyncSignalReceiverUI class.
 
+        This method sets up the main window and initializes the user interface components
+        to display the number of signals received, the port in use, and the file in use.
+
+        Parameters:
+        number_of_signals (int): The initial number of signals received.
+        port_in_use (int): The port number on which the server is listening.
+        file_in_use (str): The name of the file where the last signal was written.
+
+        Returns:
+        None
+        """
+        self.main_window = Tk()
 
         self.number_of_signals = number_of_signals
         self.port_in_use = port_in_use
         self.file_in_use = file_in_use
-        self.SignalText=StringVar()
-        self.SignalsReceivedWidget=Entry(self.main_window, font=Font(family="Arial", size=13, weight="bold"),textvariable=self.SignalText,justify="right" )
-        self.FilenNameText=StringVar()
-        self.FilenameWidget=Entry(self.main_window, font=Font(family="Arial", size=13, weight="normal"),textvariable=self.FilenNameText,justify="right" )
-
-        
-
+        self.SignalText = StringVar()
+        self.SignalsReceivedWidget = Entry(self.main_window, font=Font(family="Arial", size=13, weight="bold"), textvariable=self.SignalText, justify="right")
+        self.FilenNameText = StringVar()
+        self.FilenameWidget = Entry(self.main_window, font=Font(family="Arial", size=13, weight="normal"), textvariable=self.FilenNameText, justify="right")
 
         self.setup_ui()
 
     def setup_ui(self):
+        """
+        Set up the user interface for the PRISMAsync Signal Receiver application.
+    
+        This method initializes and arranges the various UI components in the main window,
+        including labels, entry widgets, separators, and buttons.
+    
+        Parameters:
+        None
+    
+        Returns:
+        None
+        """
         self.main_window.title("PRISMAsync Signal Receiver")
 
         # Row 1
