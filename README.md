@@ -1,4 +1,4 @@
-# Python Examples V1.2
+# Python Examples V1.1
 ## Introduction
 These files have been created to serve as examples of how JMF/JDF can be used to manage jobs on PRISMAsync. These files are provided "as is". This means that e.g. performance, error handling, input validation have not been a priority.  The examples have been written in Python3 because of the readability and availability of this language.
 
@@ -64,11 +64,10 @@ Before using these examples:
 * Make sure to replace the current printer url ( http://PRISMAsync.cpp.canon:8010 ) in some of the examples to the address of your PRISMAsync.
 
 ## Change history
-### 1.1.0In Progress
+### 1.1.0
 * BREAKING CHANGE: Renamed SendMimeJob to SendMime for sending a mime pacakge to PRISMAsync
 * Added Webserver (Thanks Addi!)
 
 ## TODO (future enhancements)
-* Add asynchronous communication (returnurl, subscriptions, ...)
-* Include own webserver for JDF filespec url's
-
+* Create Tool to remove subscriptions
+* ?
