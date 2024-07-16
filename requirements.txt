@@ -7,5 +7,5 @@ urllib3
 tk
 pathlib
 numpy
-threading
+pyperclip
 prismasyncjmfjdf @ https://github.com/ddt3/prismasyncjmfjdf/releases/latest/download/prismasyncjmfjdf.tar.gz

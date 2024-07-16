@@ -14,6 +14,7 @@ from pathlib import Path
 from tkinter import Tk, Entry, Button, Label, StringVar, W,E,EW
 from tkinter.font import Font
 from tkinter.ttk import Separator
+import pyperclip
 
 ################### Constant definitions ###############################
 # FONT = Font(family="Arial", size=11)
@@ -90,7 +91,7 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     #pylint: enable=invalid-name
 
 class PRISMAsyncSignalReceiverUI:
-    def __init__(self, number_of_signals, port_in_use, file_in_use):
+    def __init__(self, number_of_signals, ip_address_in_use, port_in_use, file_in_use):
         """
         Initialize the PRISMAsyncSignalReceiverUI class.
 
@@ -110,11 +111,15 @@ class PRISMAsyncSignalReceiverUI:
         self.number_of_signals = number_of_signals
         self.port_in_use = port_in_use
         self.file_in_use = file_in_use
+        self.ip_address_in_use = ip_address_in_use
         self.SignalText = StringVar()
         self.SignalsReceivedWidget = Entry(self.main_window, font=Font(family="Arial", size=13, weight="bold"), textvariable=self.SignalText, justify="right")
+        self.SubUrlText = StringVar()
+        self.SubUrlWidget = Entry(self.main_window, font=Font(family="Arial", size=11, weight="normal"), textvariable=self.SubUrlText, justify="right")
         self.FilenNameText = StringVar()
-        self.FilenameWidget = Entry(self.main_window, font=Font(family="Arial", size=13, weight="normal"), textvariable=self.FilenNameText, justify="right")
-
+        self.FilenameWidget = Entry(self.main_window, font=Font(family="Arial", size=11, weight="normal"), textvariable=self.FilenNameText, justify="right")
+        self.SubUrl=f"http://{self.ip_address_in_use}:{self.port_in_use}/"
+        self.SubUrlText.set(self.SubUrl)
         self.setup_ui()
 
     def setup_ui(self):
@@ -144,12 +149,15 @@ class PRISMAsyncSignalReceiverUI:
         Separator(self.main_window, orient='horizontal').grid(row=2, columnspan=3,sticky=EW)
         
         # Row 3       
-        Label(self.main_window, text="Listening on port:", font=Font(family="Arial", size=11)).grid(
+        Label(self.main_window, text="Subscription url to use:", font=Font(family="Arial", size=11)).grid(
             row=3,column=1, sticky=W
         )
-        Label(self.main_window, text=self.port_in_use, font=Font(family="Arial", size=11)).grid(
+        self.SubUrlWidget.grid(
             row=3,column=2, sticky=E
         )
+        # Label(self.main_window, text=self.port_in_use, font=Font(family="Arial", size=11)).grid(
+        #     row=3,column=2, sticky=E
+        # )
 
         # Row 4      
         Label(self.main_window, text="Wrote last signal to:", font=Font(family="Arial", size=11)).grid(
@@ -166,12 +174,18 @@ class PRISMAsyncSignalReceiverUI:
         Button(self.main_window, text="Quit", command=self.main_window.destroy).grid(
             row=5, column=2, sticky=E, pady=4
         )
+        Button(self.main_window, text="Copy URL", command=self.copy_url).grid(
+            row=5, column=1, sticky=E, pady=4
+        )
+
 
     def update_signals_received(self, new_number_of_signals):
         self.SignalText.set(new_number_of_signals)
     def update_filename(self, new_file_in_use):
         self.FilenNameText.set(new_file_in_use)
-    
+    def copy_url(self):
+        pyperclip.copy(self.SubUrl)
+
     def run(self):
         self.main_window.mainloop()
 
@@ -230,7 +244,7 @@ Log(f"Ip-address of this system: {IpAddress}")
 
 Response_File = StatusFile(clargs.file, clargs.inc)
 port = clargs.port
-app = PRISMAsyncSignalReceiverUI(Response_File.Count, port,Response_File.CompletePath.name )
+app = PRISMAsyncSignalReceiverUI(Response_File.Count, IpAddress, port,Response_File.CompletePath.name )
 
 
 # pylint: disable=bare-except
@@ -245,8 +259,10 @@ except OSError as err:
 # Start HTTP server, run it in a separate thread
 thread = threading.Thread(target=httpd.serve_forever)
 thread.daemon = True
-Log(f"Listening on port: {port}...")
+
+# Start listening for PRISMAsync signals by starting the HTTP server in a separate thread
 Log(f"Writing signals to: {clargs.file}")
+Log(f"Subscription URL: http://{IpAddress}:{port}/")
 thread.start()
 
 # Show the User interface
