@@ -51,7 +51,7 @@ Before using these examples:
 ## Change history
 ### 1.1.0In Progress
 * BREAKING CHANGE: Renamed SendMimeJob to SendMime for sending a mime pacakge to PRISMAsync
-* Added Webserver (Thanks Addi!)
+* Added Webserver (Thanks Adi!)
 
 ## TODO (future enhancements)
 * Add asynchronous communication (returnurl, subscriptions, ...)
