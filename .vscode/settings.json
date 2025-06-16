@@ -1,7 +1,5 @@
 {
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true,
-    "python.linting.pylintArgs": ["--max-line-length=130", "--indent-string='  '","--disable=C0103"],
-    "python.linting.pylamaEnabled": true,
-    "python.linting.banditEnabled": true
+    "linter.enabled": true,
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "pylint.args" : ["--rcfile=${workspaceFolder}/.vscode/pylintrc"],
 }

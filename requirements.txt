@@ -3,5 +3,9 @@ certifi
 chardet
 idna
 requests
-uuid
-defusedxml
+urllib3
+tk
+pathlib
+numpy
+pyperclip
+prismasyncjmfjdf @ https://github.com/ddt3/prismasyncjmfjdf/releases/latest/download/prismasyncjmfjdf.tar.gz

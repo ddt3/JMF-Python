@@ -107,6 +107,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv*/
 env/
 venv/
 ENV/
@@ -144,3 +145,9 @@ Python/config.ini
 *-*-*_*-*-*_*.mjm
 #test files and try-outs
 tests/*
+#generated status files
+signal*.status
+.pylintrc
+*/_received/*
+*/_response/*
+Probeersels

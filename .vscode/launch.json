@@ -9,7 +9,84 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },        
+        {
+            "name": "Python: JDF",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--pdf",
+                "http://ubuntu-hdok.ocevenlo.oce.net/pdf/8pages.pdf",
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Python: MIME",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--mime",
+                "C:\\WorkSpaces\\repos\\JMF-Python\\2023-10-02_13-39-19_52e7a454-6118-11ee-bab5-347df62fb3da.mjm",
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Python: fat-cep-621",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--url",
+                "http://fat-cep-621.ocevenlo.oce.net:8010",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: fat-cep-621 80",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--url",
+                "http://fat-cep-621.ocevenlo.oce.net:8010",
+                "--port",
+                "80"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: fat-cep-621 --inc",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--url",
+                "http://fat-cep-621.ocevenlo.oce.net:8010",
+                "--inc"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: fat-cep-620",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--url",
+                "http://fat-cep-620.ocevenlo.oce.net:8010",
+                "--inc"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

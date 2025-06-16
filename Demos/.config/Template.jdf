@@ -5,7 +5,7 @@
     <Comment ID="c190712202412.-001_000035" Name="oce:DocumentDimension">612.000 792.000</Comment>
     <ResourcePool>
         <CustomerInfo Class="Parameter" ID="r190712202412.-001_000036" Status="Available">
-            <Company OrganizationName="Canon Production Printing" />
+            <Company OrganizationName="RedGrendel Production Printing" />
         </CustomerInfo>
         
         <Contact ContactTypes="Customer" Class="Parameter" ID="r190712202412.-001_000037" Status="Available"/>
