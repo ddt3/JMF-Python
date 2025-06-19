@@ -14,7 +14,10 @@ from pathlib import Path
 from tkinter import Tk, Entry, Button, Label, StringVar, W,E,EW
 from tkinter.font import Font
 from tkinter.ttk import Separator
+import xml.dom.minidom
+import datetime
 import pyperclip
+
 
 ################### Constant definitions ###############################
 # FONT = Font(family="Arial", size=11)
@@ -30,27 +33,66 @@ class StatusFile:
     create folder if it does not exist
     """
 
-    def __init__(self, SignalFile, Increment):
-        self.LogDir = BASEPATH.joinpath("_received")
+    def __init__(self, SignalFolder):
+        self.LogDir = Path(SignalFolder)
         # create folder if it does not exist
         self.LogDir.mkdir(parents=True, exist_ok=True)
-        self.BaseName = Path(SignalFile).stem
-        self.Extension = Path(SignalFile).suffix
         self.Count = 0
-        self.Increment = Increment
-        self.CompletePath = Path(self.LogDir.joinpath(SignalFile))
+        self.CompletePath = Path()
 
     def Write(self, DataToWrite):
         """This method is used to write the received signal to a file. The file name is generated based on the signal name."""
+
+        CurrentDateTime = datetime.datetime.now().strftime("%Y%m%d-%H.%M.%S")
+        # body contains the acctual xml signal data. From this body refID (Xpath:JMF/Signal/@refID)  needs to be extracted
+        RefID = self.GetRefIDFromSignalData(DataToWrite)
         self.Count += 1
-        if self.Increment:
-            FileName = self.BaseName + "-" + str(self.Count) + self.Extension
-        else:
-            FileName = self.BaseName + self.Extension
+        # Create a unique filename that contains date-time and refID
+        FileName = RefID + "_" + CurrentDateTime + "_"+ str(self.Count) + ".xml"
         self.CompletePath = Path(self.LogDir.joinpath(FileName))
         with open(self.CompletePath, "wb") as WriteF:
             WriteF.write(DataToWrite)
+    def GetRefIDFromSignalData(self, SignalData):
+        """
+        Extract the refID (xpath:JMF/Signal/@refID) from the signal data.
+        """
+        # Example:
+        # <JMF xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="JMF.xsd">
+        #    <Signal refID="ref1" />
+        # </JMF>
+        try:
+            SignalDataXML = xml.dom.minidom.parseString(SignalData)
+            SignalElements = SignalDataXML.getElementsByTagName("Signal")
+            if SignalElements and len(SignalElements) > 0:
+                RefID = SignalElements[0].getAttribute("refID")
+                if not RefID:
+                    RefID = "unknown_refID"
+            else:
+                RefID = "no_signal_element"
+        except xml.parsers.expat.ExpatError as XmlError:
+            # Specific error for XML parsing issues
+            if clargs.debug:
+                print(f"XML parsing error: {XmlError}")
+                print(f"Error at line {XmlError.lineno}, column {XmlError.offset}")
+            return f"xml_parse_error_{XmlError.code}"
 
+        except UnicodeDecodeError as UniError:
+            # Handle encoding issues
+            if clargs.debug:
+                print(f"Unicode decode error: {UniError}")
+            return "encoding_error"
+
+        except AttributeError as AttrError:
+            # Handle issues with accessing attributes or methods
+            if clargs.debug:
+                print(f"Attribute error: {AttrError}")
+            return "attribute_error"
+
+        except Exception as CaughtError:
+            if clargs.debug:
+                print(f"Error parsing signal data: {CaughtError}")
+            return "parse_error"
+        return RefID
 
 class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     """The web server that is used to handle http post requests. It needs to be running in the background to receive PRISMAsync signals"""
@@ -82,16 +124,21 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         # you can do anything with the body, even save it ot disk :)
-        # for now, just use time in milisec to make sure the file name is unique
-       
+
         Response_File.Write(body)
-        app.update_filename(Response_File.CompletePath.name)
-        app.update_signals_received(Response_File.Count)
-        
+        app.UpdateFileName(Response_File.CompletePath.name)
+        app.UpdateSignalsReceived(Response_File.Count)
+
     #pylint: enable=invalid-name
 
+
+
 class PRISMAsyncSignalReceiverUI:
-    def __init__(self, number_of_signals, ip_address_in_use, port_in_use, file_in_use):
+    """
+    The PRISMAsyncSignalReceiverUI class is used to display the number of signals received,
+    the port in use, and the file in use in a user-friendly GUI.
+    """
+    def __init__(self, NumberOfSignals, IPAdressInUse, PortInUse, FileInUse):
         """
         Initialize the PRISMAsyncSignalReceiverUI class.
 
@@ -106,23 +153,27 @@ class PRISMAsyncSignalReceiverUI:
         Returns:
         None
         """
-        self.main_window = Tk()
+        WIDTH=45
+        self.MainWindow = Tk()
 
-        self.number_of_signals = number_of_signals
-        self.port_in_use = port_in_use
-        self.file_in_use = file_in_use
-        self.ip_address_in_use = ip_address_in_use
+        self.NumberOfSignals = NumberOfSignals
+        self.PortInUse = PortInUse
+        self.FileInUse = FileInUse
+        self.IPAdressInUse = IPAdressInUse
         self.SignalText = StringVar()
-        self.SignalsReceivedWidget = Entry(self.main_window, font=Font(family="Arial", size=13, weight="bold"), textvariable=self.SignalText, justify="right")
+        self.SignalsReceivedWidget = \
+            Entry(self.MainWindow, font=Font(family="Arial", size=13, weight="bold"), textvariable=self.SignalText, justify="right", width=WIDTH-5)
         self.SubUrlText = StringVar()
-        self.SubUrlWidget = Entry(self.main_window, font=Font(family="Arial", size=11, weight="normal"), textvariable=self.SubUrlText, justify="right")
+        self.SubUrlWidget = \
+            Entry(self.MainWindow, font=Font(family="Arial", size=11, weight="normal"), textvariable=self.SubUrlText, justify="right", width=WIDTH)
         self.FilenNameText = StringVar()
-        self.FilenameWidget = Entry(self.main_window, font=Font(family="Arial", size=11, weight="normal"), textvariable=self.FilenNameText, justify="right")
-        self.SubUrl=f"http://{self.ip_address_in_use}:{self.port_in_use}/"
+        self.FilenameWidget = \
+            Entry(self.MainWindow, font=Font(family="Arial", size=11, weight="normal"), textvariable=self.FilenNameText, justify="right", width=WIDTH)
+        self.SubUrl=f"http://{self.IPAdressInUse}:{self.PortInUse}/"
         self.SubUrlText.set(self.SubUrl)
-        self.setup_ui()
+        self.SetupUI()
 
-    def setup_ui(self):
+    def SetupUI(self):
         """
         Set up the user interface for the PRISMAsync Signal Receiver application.
     
@@ -135,59 +186,63 @@ class PRISMAsyncSignalReceiverUI:
         Returns:
         None
         """
-        self.main_window.title("PRISMAsync Signal Receiver")
+        self.MainWindow.title("PRISMAsync Signal Receiver")
 
         # Row 1
-        Label(self.main_window, text="Signals received:", font=Font(family="Arial", size=13, weight="bold")).grid(
+        Label(self.MainWindow, text="Signals received:", font=Font(family="Arial", size=13, weight="bold")).grid(
             row=1,column=1, sticky=W
         )
         self.SignalsReceivedWidget.grid(
-            row=1,column=2, sticky=W
+            row=1,column=3, sticky=W
         )
-        self.update_signals_received(self.number_of_signals)
-        # Row 2 
-        Separator(self.main_window, orient='horizontal').grid(row=2, columnspan=3,sticky=EW)
-        
-        # Row 3       
-        Label(self.main_window, text="Subscription url to use:", font=Font(family="Arial", size=11)).grid(
+        self.UpdateSignalsReceived(self.NumberOfSignals)
+        # Row 2
+        Separator(self.MainWindow, orient='horizontal').grid(row=2, columnspan=3,sticky=EW)
+
+        # Row 3
+        Label(self.MainWindow, text="Subscription url to use:", font=Font(family="Arial", size=11)).grid(
             row=3,column=1, sticky=W
         )
+        Button(self.MainWindow, text="Copy URL", command=self.CopyURL).grid(
+            row=3, column=2, sticky=E, pady=4
+        )
         self.SubUrlWidget.grid(
-            row=3,column=2, sticky=E
+            row=3,column=3, sticky=E
         )
         # Label(self.main_window, text=self.port_in_use, font=Font(family="Arial", size=11)).grid(
         #     row=3,column=2, sticky=E
         # )
 
-        # Row 4      
-        Label(self.main_window, text="Wrote last signal to:", font=Font(family="Arial", size=11)).grid(
+        # Row 4
+        Label(self.MainWindow, text="Wrote last signal to:", font=Font(family="Arial", size=11)).grid(
             row=4,column=1, sticky=W
         )
         self.FilenameWidget.grid(
-            row=4,column=2, sticky=E
+            row=4,column=3, sticky=E
         )
-        self.update_filename(self.file_in_use)
+        self.UpdateFileName(self.FileInUse)
 
 
 
         # Row 5
-        Button(self.main_window, text="Quit", command=self.main_window.destroy).grid(
-            row=5, column=2, sticky=E, pady=4
-        )
-        Button(self.main_window, text="Copy URL", command=self.copy_url).grid(
-            row=5, column=1, sticky=E, pady=4
+        Button(self.MainWindow, text="Quit", command=self.MainWindow.destroy).grid(
+            row=5, column=3, sticky=E, pady=4
         )
 
 
-    def update_signals_received(self, new_number_of_signals):
-        self.SignalText.set(new_number_of_signals)
-    def update_filename(self, new_file_in_use):
-        self.FilenNameText.set(new_file_in_use)
-    def copy_url(self):
+    def UpdateSignalsReceived(self, NewNumberOfSignals):
+        """Update the number of signals received in the UI."""
+        self.SignalText.set(NewNumberOfSignals)
+    def UpdateFileName(self, NewFileInUse):
+        """Update the name of the file in use in the UI."""
+        self.FilenNameText.set(NewFileInUse)
+    def CopyURL(self):
+        """Copy the subscription URL to the clipboard."""
         pyperclip.copy(self.SubUrl)
 
-    def run(self):
-        self.main_window.mainloop()
+    def Run(self):
+        """Run the PRISMASync Signal Receiver application."""
+        self.MainWindow.mainloop()
 
 
 ################### Function definitions ############################
@@ -205,44 +260,46 @@ S.connect(("8.8.8.8", 80))
 IpAddress = S.getsockname()[0]
 A_QUERY_ID = "anidofanquery"
 DEFAULTFILENAME = "signal.xml"
+DEFAULTFOLDERNAME = BASEPATH.joinpath("_received")
 
 ################### Defaults ########################################
 # Parse command line arguments and generate help information
-parser = argparse.ArgumentParser(description="Receive signals from PRISMAsync and store them in a folder")
+parser = argparse.ArgumentParser(description="This tool can be used to receive signals from PRISMAsync it will write the signal content to disk.\n"\
+                                 "The tool will automatically detect the IP address for listening, detected IP this can be overruled.\n" \
+                                    "The link for use as an subscription URL  that can be used as a subscription url", \
+                                    formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument(
     "--ip",
     type=str,
     default=IpAddress,
-    help="Provide ip adress of current system (default: " + IpAddress + ")",
+    help="IP adress to listen on  for signals (default: " + IpAddress + ")",
 )
 parser.add_argument(
     "--port",
     type=int,
     default=9090,
-    help="Provide ip adress of current system (default: 9090)",
+    help="Port to listen on for signals (default: 9090)",
 )
+# _received
 parser.add_argument(
-    "--file",
+    "--folder",
     type=str,
-    default=DEFAULTFILENAME,
-    help="Provide filename for JDF ticket used for submissiuon (default: "
-    + DEFAULTFILENAME
+    default=DEFAULTFOLDERNAME,
+    help="Folder used to store signals in  (default: "
+    + str(DEFAULTFOLDERNAME)
     + ")",
-)
-parser.add_argument(
-    "--inc", "-i", action="store_true", help="Add signal count to filename"
 )
 parser.add_argument(
     "--debug",
     "-d",
     action="store_true",
-    help="Do not print any output just subscribe and write to " + DEFAULTFILENAME,
+    help="Do not print any output just subscribe and write received signals to file",
 )
 clargs = parser.parse_args()
 
 Log(f"Ip-address of this system: {IpAddress}")
 
-Response_File = StatusFile(clargs.file, clargs.inc)
+Response_File = StatusFile(clargs.folder)
 port = clargs.port
 app = PRISMAsyncSignalReceiverUI(Response_File.Count, IpAddress, port,Response_File.CompletePath.name )
 
@@ -252,18 +309,28 @@ try:
     httpd = http.server.ThreadingHTTPServer(
         ("0.0.0.0", port), SimpleHTTPRequestHandler
     )
+    Log(f"Successfully started HTTP server on port {port}")
+
+except PermissionError as err:
+    print(f"Permission error: {err}")
+    print("The port is in use or you may need administrative privileges to bind to this port.")
+    exit(-2)
 except OSError as err:
-    print("OS error:", err)
+    print(f"OS error: {err}")
+    print(f"Failed to start server on port {port}. The port may be in use by another application.")
     exit(-1)
+except Exception as err:
+    print(f"Unexpected error occurred while starting the server: {err}")
+    exit(-3)
+
 # pylint: enable=bare-except
 # Start HTTP server, run it in a separate thread
 thread = threading.Thread(target=httpd.serve_forever)
 thread.daemon = True
 
 # Start listening for PRISMAsync signals by starting the HTTP server in a separate thread
-Log(f"Writing signals to: {clargs.file}")
 Log(f"Subscription URL: http://{IpAddress}:{port}/")
 thread.start()
 
 # Show the User interface
-app.run()
+app.Run()
