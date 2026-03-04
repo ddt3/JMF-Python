@@ -1,5 +1,8 @@
 {
     "linter.enabled": true,
     "terminal.integrated.defaultProfile.windows": "PowerShell",
-    "pylint.args" : ["--rcfile=${workspaceFolder}/.vscode/pylintrc"],
+    "pylint.args": [
+        "--rcfile=${workspaceFolder}/.vscode/pylintrc"
+    ],
+    "python-envs.pythonProjects": [],
 }
