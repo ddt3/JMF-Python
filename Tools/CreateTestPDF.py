@@ -98,6 +98,8 @@ def create_test_pdf(output_path, num_pages=1, title="Test PDF", text="Test conte
             color = colors[(page_num - 1) % len(colors)]
             pdf.set_text_color(*color)
         pdf.set_font("Helvetica", "", 12)
+        # find the middle of the page and start the text there
+        pdf.set_xy(pdf.w / 2 - 50, pdf.h / 2 - 10)
         replaced_text = text.replace("##", str(page_num))
         pdf.multi_cell(0, 10, replaced_text)
         pdf.ln(10)
@@ -109,9 +111,15 @@ def create_test_pdf(output_path, num_pages=1, title="Test PDF", text="Test conte
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
-    # Save PDF
-    pdf.output(str(output_path))
-    print(f"✅ Created PDF: {output_path}")
+    # Save PDF but make sure it is possible to write to the location, if not print an error message
+    try:
+        pdf.output(str(output_path))
+        print(f"✅ Created PDF: {output_path}")
+    except Exception as e:
+        print(f"❌ Failed to create PDF: {e}")
+        # If the error is a permission error, suggest that the file might be open in another program
+        if isinstance(e, PermissionError):
+            print("   Is the file opened in another program? Please close it and try again.")
 
 
 def main():
