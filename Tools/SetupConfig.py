@@ -5,6 +5,7 @@ SetupConfig creates and populates a .config folder with default files
 for JMF tools: SubmitQueueEntry.jmf, Template.jdf, and Test.pdf
 """
 import sys
+import argparse
 from pathlib import Path
 from CreateTestPDF import create_test_pdf
 
@@ -175,4 +176,14 @@ def setup_config():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description="SetupConfig creates and populates a .config folder with default files for JMF tools.",
+        epilog="This tool creates three files in a .config directory:\n"
+               "  • SubmitQueueEntry.jmf - Default JMF command template\n"
+               "  • Template.jdf - Default JDF job ticket template\n"
+               "  • Test.pdf - Sample test PDF for JMF processing\n\n"
+               "If files already exist, you will be prompted before overwriting them.",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    args = parser.parse_args()
     setup_config()

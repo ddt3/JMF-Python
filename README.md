@@ -6,8 +6,9 @@ These files have been created to serve as examples of how JMF/JDF can be used to
 Included python scripts have been divided into 2 groups: Tools, Demos (in the future more will follow)
 
 ### Tools
-The tools folder contains some usefull tools when testing JMF/JDF.
+The tools folder contains some usefull command line  tools when testing JMF/JDF.
 Each tool shows a short usage message when using -h or --help as a parameter.
+
 #### CreateMimePackage
 Creates a mime package from JMF, JDF and PDF. This mime package  can be send to PRISMAsync.
 #### JMFSubmitter
@@ -16,6 +17,8 @@ Can be used to submit jobs to PRISMAsync using JMF, it can also be used to send 
 Can be used to clean-up QueueEntryIDs from PRISMAsync. Can be filtered on status (e.g. only remove Aborted jobs)
 #### ReceiveSignals
 Can be used for testing PRISMAsync JMF Subscriptions, when signals are send from PRISMAsync this python progam will receive these signals and write them to an XML file or XML files
+#### CreateTestPDF
+Can be used to create simple test PDFs of a specific number of pages and media size
 
 ### Demos
 #### TrayUI
@@ -37,7 +40,7 @@ python -m venv .venv
 .\.venv\Scripts\activate.ps1
 ```
 
-To install the needed python pacakges, run:
+To install the needed python pacakges in this environment, run:
 
 ```python -m pip install -r requirements.txt ```
 
@@ -64,6 +67,16 @@ Before using these examples:
 * Make sure to replace the current printer url ( http://PRISMAsync.cpp.canon:8010 ) in some of the examples to the address of your PRISMAsync.
 
 ## Change history
+### 1.2.0
+* Based on module prismasyncjmfjdf a number of tools have been created for stand-alone use.<br>
+Tools are available as python scripts and .exe files (scripts can serve as further examples for use of prismasyncjmfjdf)
+* CreateTestPDF has been addded
+* SetupConfig has been added
+* Improved ReceiveSignal<br>
+Use queueentryid in saved signal file<br>
+Small UI changes
+* Removed use of pathlib module (now uses internal pathlib)<br>
+It is best to remove pathlib from environment: `pip uninstall pathlib`
 ### 1.1.0
 * BREAKING CHANGE: Renamed SendMimeJob to SendMime for sending a mime pacakge to PRISMAsync
 * Added Webserver (Thanks Adi!)
