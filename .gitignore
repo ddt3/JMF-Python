@@ -151,3 +151,8 @@ signal*.status
 */_received/*
 */_response/*
 Probeersels
+
+# Ignore all PDFs except those in .config folder
+*.pdf
+!.config/
+!.config/*.pdf

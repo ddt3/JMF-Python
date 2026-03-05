@@ -9,6 +9,38 @@ import argparse
 from pathlib import Path
 from fpdf import FPDF, XPos, YPos
 
+sizes = {
+    'a3': (297, 420),  # in mm
+    'a4': (210, 297),  # in mm
+    'a5': (148, 210),  # in mm
+    'sra3': (320, 450),  # in mm
+    'tabloid': (279, 432),  # in mm
+    'legal': (216, 356),  # in mm
+    'ledger': (432, 279),  # in mm
+    'letter': (216, 279),  # in mm
+    'tabloid-extra': (305, 457),  # in mm
+}
+
+class PDF(FPDF):
+    def __init__(self, title="", total_pages=0, **kwargs):
+        super().__init__(**kwargs)
+        self.pdf_title = title
+        self.total_pages = total_pages
+
+    def header(self):
+        # Override the header method to prevent default header
+        # Add title
+        self.set_font("Helvetica", "B", 16)
+        self.cell(0, 10, self.pdf_title, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+        self.ln(10)
+
+    def footer(self):
+        # Override the footer method to prevent default footer
+                # Add page number at the bottom of the page with page size information
+        self.set_y(-15)
+        self.set_font("Helvetica", "I", 10)
+        self.cell(0, 10, f"Page {self.page_no()} of {self.total_pages}, size : {self.w:.0f}x{self.h:.0f}(mm) / {self.w/25.4:.2f}x{self.h/25.4:.2f}(inches)", align="C")
+
 
 def get_tools_dir():
     """Get the directory containing this tool, handling both script and PyInstaller execution."""
@@ -21,20 +53,22 @@ def get_tools_dir():
 
 def get_page_size(size_name):
     """Return page dimensions for a given size name."""
-    sizes = {
-        'a3': (297, 420),  # in mm
-        'a4': (210, 297),  # in mm
-        'a5': (148, 210),  # in mm
-        'sra3': (320, 450),  # in mm
-        'tabloid': (279, 432),  # in mm
-        'legal': (216, 356),  # in mm
-        'ledger': (432, 279),  # in mm
-        'letter': (216, 279),  # in mm
-        'tabloid-extra': (305, 457),  # in mm
-    }
+    global sizes 
+    if size_name.startswith("custom"):
+        try:
+            dimensions = size_name[len("custom"):].split('x')
+            if len(dimensions) == 2:
+                width = float(dimensions[0])
+                height = float(dimensions[1])
+                return (width, height)
+        except ValueError:
+            print(f"Invalid custom size format: {size_name}. Expected format: custom[width]x[height] (e.g. custom220x310)")
     return sizes.get(size_name, sizes['a4'])  # Default to a4 if unknown
 
-
+def list_media_sizes():
+    """List all available media sizes."""
+    global sizes
+    return list(sizes.keys())
 
 def create_test_pdf(output_path, num_pages=1, title="Test PDF", text="Test content", blackwhite=False, pagesize='a4'):
     """
@@ -46,15 +80,12 @@ def create_test_pdf(output_path, num_pages=1, title="Test PDF", text="Test conte
         title: Title/header for the PDF
         text: Text content for each page
     """
-    pdf = FPDF(orientation="portrait", format=get_page_size(pagesize))
+    pdf = PDF(title=title, total_pages=num_pages, orientation="portrait", format=get_page_size(pagesize))
     
     for page_num in range(1, num_pages + 1):
         pdf.add_page()
         
-        # Add title
-        pdf.set_font("Helvetica", "B", 16)
-        pdf.cell(0, 10, title, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
-        pdf.ln(10)
+
         
         # Add text content
         # The text can include "##" which will be replaced with the current page number
@@ -71,9 +102,8 @@ def create_test_pdf(output_path, num_pages=1, title="Test PDF", text="Test conte
         pdf.multi_cell(0, 10, replaced_text)
         pdf.ln(10)
         
-        # Add page number
-        pdf.set_font("Helvetica", "I", 10)
-        pdf.cell(0, 10, f"Page {page_num} of {num_pages}", align="C")
+        #draw a border around the page for visual reference
+        pdf.rect(0+5, 0+5, pdf.w-10, pdf.h-10)
     
     # Create output directory if it doesn't exist
     output_path = Path(output_path)
@@ -87,7 +117,7 @@ def create_test_pdf(output_path, num_pages=1, title="Test PDF", text="Test conte
 def main():
     """Parse arguments and create test PDF."""
     parser = argparse.ArgumentParser(
-        description="Create simple test PDF files for use with JMF tools."
+        description="Create a simple test PDF file for use with JMF tools."
     )
     parser.add_argument(
         '-o', '--output',
@@ -99,7 +129,7 @@ def main():
         '-p', '--pages',
         type=int,
         default=1,
-        help='Number of pages to create (default: 1)'
+        help='Total number of pages of the created PDF (default: 1)'
     )
     parser.add_argument(
         '-t', '--title',
@@ -110,24 +140,30 @@ def main():
     parser.add_argument(
         '-c', '--content',
         type=str,
-        default='This is page ## a test PDF created for JMF processing.',
-        help='Text content for each page, ## will be replaced with page number (default: "This is page ## a test PDF created for JMF processing.")'
+        default='This is page ## of a test PDF created for JMF processing.',
+        help='Content line on each page, when ## is used it  will be replaced by the current page number (default: "This is page ## of a test PDF created for JMF processing.")'
     )
     parser.add_argument(
         '--config',
         action='store_true',
-        help='Save PDF to .config folder instead of current directory'
+        help='Save PDF to .config folder instead of current directory. Can be used to create a default PDFs for use with the other JMF tools(default: False)'
     )
     parser.add_argument(
         '--blackwhite', '-bw',
         action='store_true',
-        help='Create a black and white PDF (default: color)'
+        help='Create a black and white PDF. Normally text is in a random random color. Use this option to create a PDF with black text (default: color)'
     )
+    parser.add_argument(
+        '--list-sizes', '-ls',
+        action='store_true',
+        help='Do not create a PDF, just list all available media sizes'
+    )
+        
     parser.add_argument(
         '--pagesize', '-ps',
         type=str,
         default='a4',
-        help='Page size for the PDF (default: a4)'
+        help='Available known page sizes for the PDF (default: a4)'
     )    
     args = parser.parse_args()
     
@@ -141,7 +177,14 @@ def main():
         output_path = Path(args.output)
     
     # Create the PDF
-    create_test_pdf(output_path, args.pages, args.title, args.content, args.blackwhite, args.pagesize)
+    if args.list_sizes:
+        print("Available media sizes:")
+        for size in list_media_sizes():
+            print(f" -ps {size}")
+        print("Custom media sizes:")
+        print(f" -ps custom[width]x[height] (e.g. -ps custom220x310, size in mm)")
+    else:
+        create_test_pdf(output_path, args.pages, args.title, args.content, args.blackwhite, args.pagesize)
 
 
 if __name__ == '__main__':
