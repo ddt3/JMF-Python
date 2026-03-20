@@ -142,7 +142,7 @@ Python/temp/*
 Python/config.ini
 #HDOK
 #generated mjm files
-*-*-*_*-*-*_*.mjm
+*.mjm
 #test files and try-outs
 tests/*
 #generated status files

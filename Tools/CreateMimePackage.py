@@ -4,6 +4,7 @@ either by reference (http) or as a file to include in the mime package
 """
 import sys
 import argparse
+import shutil
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 from urllib.request import url2pathname
@@ -66,6 +67,8 @@ parser.add_argument('--jdf', '-t', type=str, default=JDFFILE,
                     help=f'Provide filename for JDF ticket used for submissiuon (default: {JDFFILE})')
 parser.add_argument('--pdf', '-p', type=str, default=PDFURL,
                     help='Provide URL for PDF starting with either http:// or file://. (default: %(default)s)')
+parser.add_argument('--output', '-o', type=str, 
+                    help='Provide name for the output MIME package file. (default: filename based on timestamp)')
 args = parser.parse_args()
 
 
@@ -139,5 +142,19 @@ except PermissionError as err:
     _fail(f"Permission denied while creating MIME package: {err}", exit_code=1)
 except Exception as err:
     _fail(f"Failed to create MIME package: {err}", exit_code=1)
+
+# The library may return either str or Path; normalize for consistent handling.
+output_file = Path(output_file)
+
+if args.output:
+    # Move the generated package to the requested output location.
+    new_output_file = Path(args.output)
+    try:
+        new_output_file.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(output_file), str(new_output_file))
+        output_file = new_output_file
+        print(f"[OK] MIME package created with filename: {new_output_file}")
+    except Exception as err:
+        _fail(f"Failed to save MIME package to '{new_output_file}': {err}", exit_code=1)
 
 print("Mime-package created with filename:", output_file)
