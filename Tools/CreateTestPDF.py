@@ -60,10 +60,13 @@ def get_page_size(size_name):
             if len(dimensions) == 2:
                 width = float(dimensions[0])
                 height = float(dimensions[1])
+                if width <= 0 or height <= 0:
+                    return None
                 return (width, height)
         except ValueError:
-            print(f"Invalid custom size format: {size_name}. Expected format: custom[width]x[height] (e.g. custom220x310)")
-    return sizes.get(size_name, sizes['a4'])  # Default to a4 if unknown
+            return None
+        return None
+    return sizes.get(size_name)
 
 def list_media_sizes():
     """List all available media sizes."""
@@ -80,7 +83,13 @@ def create_test_pdf(output_path, num_pages=1, title="Test PDF", text="Test conte
         title: Title/header for the PDF
         text: Text content for each page
     """
-    pdf = PDF(title=title, total_pages=num_pages, orientation="portrait", format=get_page_size(pagesize))
+    page_size = get_page_size(pagesize)
+    if page_size is None:
+        raise ValueError(
+            f"Invalid page size '{pagesize}'. Use one of: {', '.join(list_media_sizes())} or custom[width]x[height]"
+        )
+
+    pdf = PDF(title=title, total_pages=num_pages, orientation="portrait", format=page_size)
     
     for page_num in range(1, num_pages + 1):
         pdf.add_page()
@@ -114,16 +123,21 @@ def create_test_pdf(output_path, num_pages=1, title="Test PDF", text="Test conte
     # Save PDF but make sure it is possible to write to the location, if not print an error message
     try:
         pdf.output(str(output_path))
-        print(f"✅ Created PDF: {output_path}")
-    except Exception as e:
-        print(f"❌ Failed to create PDF: {e}")
-        # If the error is a permission error, suggest that the file might be open in another program
-        if isinstance(e, PermissionError):
-            print("   Is the file opened in another program? Please close it and try again.")
+        print(f"[OK] Created PDF: {output_path}")
+    except PermissionError as e:
+        raise PermissionError(
+            f"Failed to create PDF at '{output_path}'. The file may be open in another program or not writable"
+        ) from e
+    except OSError as e:
+        raise OSError(f"Failed to write PDF to '{output_path}': {e}") from e
 
 
 def main():
     """Parse arguments and create test PDF."""
+    def _fail(message, exit_code=2):
+        print(f"Error: {message}")
+        sys.exit(exit_code)
+
     parser = argparse.ArgumentParser(
         description="Create a simple test PDF file for use with JMF tools."
     )
@@ -174,6 +188,9 @@ def main():
         help='Available known page sizes for the PDF (default: a4)'
     )    
     args = parser.parse_args()
+
+    if args.pages < 1:
+        _fail("Number of pages must be at least 1")
     
     # Determine output path
     if args.config:
@@ -192,7 +209,16 @@ def main():
         print("Custom media sizes:")
         print(f" -ps custom[width]x[height] (e.g. -ps custom220x310, size in mm)")
     else:
-        create_test_pdf(output_path, args.pages, args.title, args.content, args.blackwhite, args.pagesize)
+        try:
+            create_test_pdf(output_path, args.pages, args.title, args.content, args.blackwhite, args.pagesize)
+        except ValueError as e:
+            _fail(str(e), exit_code=2)
+        except PermissionError as e:
+            _fail(str(e), exit_code=1)
+        except OSError as e:
+            _fail(str(e), exit_code=1)
+        except Exception as e:
+            _fail(f"Unexpected error while creating PDF: {e}", exit_code=1)
 
 
 if __name__ == '__main__':

@@ -10,6 +10,7 @@ import sys
 import subprocess
 import shutil
 import argparse
+import stat
 from pathlib import Path
 
 # Define the tools to build
@@ -22,6 +23,26 @@ TOOLS = [
     'SetupConfig',
 ]
 
+
+def _handle_remove_readonly(func, path, exc_info):
+    """Retry failed delete operations after clearing read-only attributes."""
+    exc = exc_info[1]
+    winerror = getattr(exc, 'winerror', None)
+    if isinstance(exc, PermissionError) or winerror == 5:
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+        return
+    raise exc
+
+
+def _safe_rmtree(path):
+    """Remove a directory tree and handle Windows permission cases."""
+    try:
+        shutil.rmtree(path, onerror=_handle_remove_readonly)
+        return True, None
+    except Exception as exc:
+        return False, str(exc)
+
 def clean_build_artifacts(tools_to_clean):
     """Remove build and dist directories for specified tools."""
     buildspec_dir = Path(__file__).resolve().parent
@@ -30,20 +51,20 @@ def clean_build_artifacts(tools_to_clean):
         # Clean dist/tool directory
         tool_dist_dir = buildspec_dir / 'dist' / tool
         if tool_dist_dir.exists():
-            try:
-                shutil.rmtree(tool_dist_dir)
-                print(f"✅ Removed: {tool_dist_dir}")
-            except Exception as e:
-                print(f"⚠️  Failed to remove {tool_dist_dir}: {e}")
+            removed, error = _safe_rmtree(tool_dist_dir)
+            if removed:
+                print(f"[OK] Removed: {tool_dist_dir}")
+            else:
+                print(f"[WARN] Failed to remove {tool_dist_dir}: {error}")
         
         # Clean build/tool directory
         tool_build_dir = buildspec_dir / 'build' / tool
         if tool_build_dir.exists():
-            try:
-                shutil.rmtree(tool_build_dir)
-                print(f"✅ Removed: {tool_build_dir}")
-            except Exception as e:
-                print(f"⚠️  Failed to remove {tool_build_dir}: {e}")
+            removed, error = _safe_rmtree(tool_build_dir)
+            if removed:
+                print(f"[OK] Removed: {tool_build_dir}")
+            else:
+                print(f"[WARN] Failed to remove {tool_build_dir}: {error}")
 
 def build_tools(tools_to_build):
     """Build specified tools using PyInstaller."""
@@ -60,7 +81,7 @@ def build_tools(tools_to_build):
         spec_file = buildspec_dir / f'{tool}.spec'
         
         if not spec_file.exists():
-            print(f"❌ Spec file not found: {spec_file}")
+            print(f"[ERROR] Spec file not found: {spec_file}")
             build_results.append((tool, False, f"Spec file not found"))
             continue
         
@@ -76,7 +97,7 @@ def build_tools(tools_to_build):
         )
         
         if result.returncode != 0:
-            print(f"❌ Build failed for {tool}")
+            print(f"[ERROR] Build failed for {tool}")
             build_results.append((tool, False, "Build failed"))
             continue
         
@@ -84,10 +105,10 @@ def build_tools(tools_to_build):
         exe_file = dist_dir / f'{tool}.exe'
         
         if exe_file.exists():
-            print(f"✅ Built {tool}.exe")
+            print(f"[OK] Built {tool}.exe")
             build_results.append((tool, True, "Success"))
         else:
-            print(f"⚠️  Executable not found: {exe_file}")
+            print(f"[WARN] Executable not found: {exe_file}")
             build_results.append((tool, False, "Executable not found"))
     
     # Report summary
@@ -95,13 +116,13 @@ def build_tools(tools_to_build):
     print("Build Summary:")
     print(f"{'='*60}")
     for tool, success, message in build_results:
-        status = "✅" if success else "❌"
+        status = "[OK]" if success else "[ERROR]"
         print(f"{status} {tool}: {message}")
     
     successful = sum(1 for _, success, _ in build_results if success)
     total = len(build_results)
     print(f"\n{'='*60}")
-    print(f"✅ Build complete! {successful}/{total} tools built successfully.")
+    print(f"[OK] Build complete! {successful}/{total} tools built successfully.")
     print(f"Executables are in: {dist_dir}")
     print(f"{'='*60}")
 
@@ -135,7 +156,7 @@ def main():
     for tool in tools_to_process:
         spec_file = buildspec_dir / f'{tool}.spec'
         if not spec_file.exists():
-            print(f"❌ Error: Spec file not found for {tool}: {spec_file}")
+            print(f"[ERROR] Spec file not found for {tool}: {spec_file}")
             sys.exit(1)
     
     # Clean if requested

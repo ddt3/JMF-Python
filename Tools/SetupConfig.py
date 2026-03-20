@@ -111,11 +111,16 @@ def confirm_overwrite(file_path):
     """Ask user for confirmation before overwriting a file."""
     if file_path.exists():
         while True:
-            response = input(f"File exists: {file_path.name}. Overwrite? (y/n): ").strip().lower()
+            try:
+                response = input(f"File exists: {file_path.name}. Overwrite? (y/n): ").strip().lower()
+            except (KeyboardInterrupt, EOFError):
+                print("\nOperation canceled by user")
+                return False
             if response in ('y', 'yes'):
                 return True
             elif response in ('n', 'no'):
                 return False
+            print("Please answer with 'y' or 'n'.")
     return True
 
 
@@ -126,32 +131,32 @@ def setup_config():
     config_dir = tools_dir / '.config'
     
     # Create .config directory
-    config_dir.mkdir(exist_ok=True)
-    print(f"✅ Created/verified .config directory: {config_dir}\n")
+    config_dir.mkdir(parents=True, exist_ok=True)
+    print(f"[OK] Created/verified .config directory: {config_dir}\n")
     
     # Write SubmitQueueEntry.jmf
     jmf_target = config_dir / 'SubmitQueueEntry.jmf'
     if confirm_overwrite(jmf_target):
         try:
-            with open(jmf_target, 'w') as f:
+            with open(jmf_target, 'w', encoding='utf-8') as f:
                 f.write(SUBMIT_JMF_CONTENT)
-            print(f"✅ Created SubmitQueueEntry.jmf")
+            print(f"[OK] Created SubmitQueueEntry.jmf")
         except Exception as e:
-            print(f"❌ Failed to create SubmitQueueEntry.jmf: {e}")
+            print(f"[ERROR] Failed to create SubmitQueueEntry.jmf: {e}")
     else:
-        print(f"⏭️  Skipped SubmitQueueEntry.jmf")
+        print(f"[SKIP] Skipped SubmitQueueEntry.jmf")
     
     # Write Template.jdf
     jdf_target = config_dir / 'Template.jdf'
     if confirm_overwrite(jdf_target):
         try:
-            with open(jdf_target, 'w') as f:
+            with open(jdf_target, 'w', encoding='utf-8') as f:
                 f.write(TEMPLATE_JDF_CONTENT)
-            print(f"✅ Created Template.jdf")
+            print(f"[OK] Created Template.jdf")
         except Exception as e:
-            print(f"❌ Failed to create Template.jdf: {e}")
+            print(f"[ERROR] Failed to create Template.jdf: {e}")
     else:
-        print(f"⏭️  Skipped Template.jdf")
+        print(f"[SKIP] Skipped Template.jdf")
     
     # Create Test.pdf
     pdf_target = config_dir / 'Test.pdf'
@@ -165,12 +170,12 @@ def setup_config():
                 text="This is a test PDF created by SetupConfig for use with JMF tools."
             )
         except Exception as e:
-            print(f"❌ Failed to create Test.pdf: {e}")
+            print(f"[ERROR] Failed to create Test.pdf: {e}")
     else:
-        print(f"⏭️  Skipped Test.pdf")
+        print(f"[SKIP] Skipped Test.pdf")
     
     print(f"\n{'='*60}")
-    print(f"✅ Setup complete!")
+    print(f"[OK] Setup complete!")
     print(f"Config folder: {config_dir}")
     print(f"{'='*60}")
 
@@ -186,4 +191,14 @@ if __name__ == '__main__':
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     args = parser.parse_args()
-    setup_config()
+    try:
+        setup_config()
+    except PermissionError as err:
+        print(f"Error: Permission denied while writing config files: {err}")
+        sys.exit(1)
+    except OSError as err:
+        print(f"Error: Failed to create configuration files: {err}")
+        sys.exit(1)
+    except Exception as err:
+        print(f"Error: Unexpected setup failure: {err}")
+        sys.exit(1)

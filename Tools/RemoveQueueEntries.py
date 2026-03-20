@@ -1,5 +1,7 @@
 from prismasyncjmfjdf import RemoveQueueEntries
 import argparse
+import sys
+from urllib.parse import urlparse
 
 # Provide a correct address for your printer: http://<hostname or ip address>:<portnumber>
 # By PRISMAsync default port number is 8010. make sure to enable jmf support in the PRISMAsync settings editor
@@ -19,12 +21,41 @@ parser.add_argument('--status', '-s', type=str, default=JOBSTATETOREMOVE,
 parser.add_argument('--id', '-i', type=str, 
                     help='\nA QueuEntryID of a single job')
 args = parser.parse_args()
+
+
+def _fail(message, exit_code=2):
+    print(f"Error: {message}")
+    sys.exit(exit_code)
+
+
+def _is_valid_http_url(url_value):
+    parsed = urlparse(url_value)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+if not _is_valid_http_url(args.url):
+    _fail(f"Invalid PRISMAsync URL: {args.url}. Use http://<host>:<port> or https://<host>:<port>")
+
 url=args.url
-if args.status is not None and args.id is None:
-    status=args.status
-    print(RemoveQueueEntries(url, status=status), "QueueEntries have been removed")
-elif args.status is None and args.id is not None:
-    QueueEntryID=args.id
-    print(RemoveQueueEntries(url, QueueEntryID=QueueEntryID), "QueueEntries have been removed")
-else:
-    parser.error('Wrong arguments passed')
+if args.status is not None and args.id is not None:
+    _fail("Provide either --status or --id, not both")
+
+try:
+    if args.id is not None:
+        QueueEntryID = args.id.strip()
+        if not QueueEntryID:
+            _fail("QueueEntryID cannot be empty")
+        removed = RemoveQueueEntries(url, QueueEntryID=QueueEntryID)
+        print(removed, "QueueEntries have been removed")
+    elif args.status is not None:
+        status = args.status
+        removed = RemoveQueueEntries(url, status=status)
+        print(removed, "QueueEntries have been removed")
+    else:
+        _fail("Either --status or --id must be provided")
+except ConnectionError as err:
+    _fail(f"Network connection error while removing queue entries: {err}", exit_code=1)
+except TimeoutError as err:
+    _fail(f"Timeout while removing queue entries: {err}", exit_code=1)
+except Exception as err:
+    _fail(f"Failed to remove queue entries: {err}", exit_code=1)

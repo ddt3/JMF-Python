@@ -5,6 +5,8 @@ either by reference (http) or as a file to include in the mime package
 import sys
 import argparse
 from pathlib import Path
+from urllib.parse import urlparse, unquote
+from urllib.request import url2pathname
 from prismasyncjmfjdf import  CreateMimePackage
 
 
@@ -52,7 +54,7 @@ if configpath.exists():
     if not pdffile.exists():
         PDFURL=None
     else:
-        PDFURL=f'file://{str(pdffile)}'
+        PDFURL=pdffile.as_posix()
 
 
 # The following block is used to take command line options for this tool.
@@ -63,8 +65,34 @@ parser.add_argument('--jmf', '-j', type=str, default=SUBMITJMF,
 parser.add_argument('--jdf', '-t', type=str, default=JDFFILE,
                     help=f'Provide filename for JDF ticket used for submissiuon (default: {JDFFILE})')
 parser.add_argument('--pdf', '-p', type=str, default=PDFURL,
-                    help=f'Provide URL for PDF starting with either http:// or file. (default: {PDFURL})')
+                    help='Provide URL for PDF starting with either http:// or file://. (default: %(default)s)')
 args = parser.parse_args()
+
+
+def _fail(message, exit_code=2):
+    print(f"Error: {message}")
+    sys.exit(exit_code)
+
+
+def _file_from_file_url(file_url):
+    if not file_url.startswith("file://"):
+        return None
+
+    # Accept common non-standard relative forms like file://./path or file://.\path.
+    # This keeps CLI behavior user-friendly on both Windows and Linux.
+    non_standard_path = file_url[len("file://"):]
+    if non_standard_path.startswith("./") or non_standard_path.startswith(".\\"):
+        return Path(non_standard_path)
+
+    parsed = urlparse(file_url)
+    if parsed.scheme != "file":
+        return None
+    if parsed.netloc and parsed.netloc != "localhost":
+        raw_path = f"//{parsed.netloc}{parsed.path}"
+    else:
+        raw_path = parsed.path
+    local_path = url2pathname(unquote(raw_path))
+    return Path(local_path)
 
 
 # Validate that all required arguments are provided
@@ -75,7 +103,41 @@ if args.jdf is None:
 if args.pdf is None:
     parser.error("PDF URL is required. Provide --pdf argument or create a .config/Test.pdf file")
 
+# Validate files and inputs before creating the MIME package to avoid raw tracebacks.
+jmf_path = Path(args.jmf)
+if not jmf_path.is_file():
+    _fail(f"JMF file not found: {jmf_path}")
+
+jdf_path = Path(args.jdf)
+if not jdf_path.is_file():
+    _fail(f"JDF file not found: {jdf_path}")
+
+if args.pdf.startswith("http://") or args.pdf.startswith("https://"):
+    pass
+elif args.pdf.startswith("file://"):
+    pdf_path = _file_from_file_url(args.pdf)
+    if pdf_path is None or not pdf_path.is_file():
+        _fail(f"PDF file not found: {args.pdf}")
+    # Convert file:// URL back to plain file path for library compatibility
+    args.pdf = pdf_path.as_posix()
+else:
+    # Support direct file paths for convenience in script and executable usage.
+    pdf_direct_path = Path(args.pdf)
+    if not pdf_direct_path.is_file():
+        _fail("PDF must be an http(s) URL, file:// URL, or an existing local file path")
+    # Convert Windows paths to forward slashes for library compatibility
+    args.pdf = pdf_direct_path.as_posix()
+
 # The jmfmessages library contains examples of how jmf can be used to send commands to PRISMAsync and obtain information from PRISMAsync
 # This file is an example of how the libraries can be used to create a full mime package (including PDF)
 
-print("Mime-package created with filename:",CreateMimePackage(args.jmf,args.jdf, args.pdf))
+try:
+    output_file = CreateMimePackage(args.jmf, args.jdf, args.pdf)
+except FileNotFoundError as err:
+    _fail(f"Input file not found: {err.filename}", exit_code=1)
+except PermissionError as err:
+    _fail(f"Permission denied while creating MIME package: {err}", exit_code=1)
+except Exception as err:
+    _fail(f"Failed to create MIME package: {err}", exit_code=1)
+
+print("Mime-package created with filename:", output_file)

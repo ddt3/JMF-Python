@@ -9,6 +9,7 @@ This simple example could be used as a starting point for workflows based on jmf
 import argparse
 import http.server
 import socket
+import ipaddress
 import threading
 from pathlib import Path
 from tkinter import Tk, Entry, Button, Label, StringVar, W,E,EW
@@ -17,6 +18,12 @@ from tkinter.ttk import Separator
 import xml.dom.minidom
 import datetime
 import pyperclip
+
+
+def fail(message, exit_code=2):
+    """Print a user-friendly error message and exit with code."""
+    print(f"Error: {message}")
+    raise SystemExit(exit_code)
 
 
 ################### Constant definitions ###############################
@@ -119,7 +126,19 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         #     global response_file
 
         Log("in POST")
-        content_length = int(self.headers["Content-Length"])
+        content_length_header = self.headers.get("Content-Length")
+        if content_length_header is None:
+            self.send_response(411)
+            self.end_headers()
+            return
+
+        try:
+            content_length = int(content_length_header)
+        except ValueError:
+            self.send_response(400)
+            self.end_headers()
+            return
+
         body = self.rfile.read(content_length)
         self.send_response(200)
         self.end_headers()
@@ -253,11 +272,21 @@ def Log(DebugS):
     if clargs.debug:
         print(DebugS)
 
+
+def determine_default_ip():
+    """Best-effort local IP detection with safe fallback for offline environments."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.connect(("8.8.8.8", 80))
+        return sock.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+    finally:
+        sock.close()
+
 ################### Defaults ########################################
 # Determine own ipaddress, it is needed to define subscribe url send to PRISMAsync information
-S = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-S.connect(("8.8.8.8", 80))
-IpAddress = S.getsockname()[0]
+IpAddress = determine_default_ip()
 A_QUERY_ID = "anidofanquery"
 DEFAULTFILENAME = "signal.xml"
 DEFAULTFOLDERNAME = BASEPATH.joinpath("_received")
@@ -297,11 +326,24 @@ parser.add_argument(
 )
 clargs = parser.parse_args()
 
+try:
+    ipaddress.ip_address(clargs.ip)
+except ValueError:
+    fail(f"Invalid IP address: {clargs.ip}")
+
+if clargs.port < 1 or clargs.port > 65535:
+    fail(f"Port out of range: {clargs.port}. Use a value between 1 and 65535")
+
+try:
+    Path(clargs.folder).mkdir(parents=True, exist_ok=True)
+except OSError as err:
+    fail(f"Cannot create or access signal folder '{clargs.folder}': {err}")
+
 Log(f"Ip-address of this system: {IpAddress}")
 
 Response_File = StatusFile(clargs.folder)
 port = clargs.port
-app = PRISMAsyncSignalReceiverUI(Response_File.Count, IpAddress, port,Response_File.CompletePath.name )
+app = PRISMAsyncSignalReceiverUI(Response_File.Count, clargs.ip, port,Response_File.CompletePath.name )
 
 
 # pylint: disable=bare-except

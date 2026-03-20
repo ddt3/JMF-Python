@@ -5,6 +5,8 @@ Upon exit it will return the returned QueueEntryID
 import sys
 import argparse
 from pathlib import Path
+from urllib.parse import urlparse, unquote
+from urllib.request import url2pathname
 from prismasyncjmfjdf import SendJob, SendMime
 
 #############################################################################################################
@@ -56,7 +58,7 @@ if configpath.exists():
     if not pdffile.exists():
         PDFURL=None
     else:
-        PDFURL=f'file://{str(pdffile)}'
+        PDFURL=pdffile.as_posix()
 
 # # Which JMF file to use for submission in the examples
 # SUBMITJMF='\"jmfjdf/SubmitQueueEntry.jmf\"'
@@ -76,12 +78,43 @@ parser.add_argument('--jmf', '-j', type=str, default=SUBMITJMF,
 parser.add_argument('--jdf', '-t', type=str, default=JDFFILE,
                     help=f'Provide filename for JDF ticket used for submissiuon (default: {JDFFILE})')
 parser.add_argument('--pdf', '-p', type=str, default=PDFURL,
-                    help=f'Provide URL for PDF starting with either http:// or file://. If file:// is used PDF will be part of mime pacakge (default: {PDFURL})')
+                    help='Provide URL for PDF starting with either http:// or file://. If file:// is used PDF will be part of mime pacakge (default: %(default)s)')
 parser.add_argument('--silent', '-s', action='store_true',
                     help='Do not print ID just submit and stay silent')
 parser.add_argument('--mime', '-m', type=str, default=None,
                     help='Mime package to send, takes priority over all other settings (default: no mime package)')
 args = parser.parse_args()
+
+
+def _fail(message, exit_code=2):
+    print(f"Error: {message}")
+    sys.exit(exit_code)
+
+
+def _file_from_file_url(file_url):
+    if not file_url.startswith("file://"):
+        return None
+
+    # Accept common non-standard relative forms like file://./path or file://.\path.
+    # This keeps CLI behavior user-friendly on both Windows and Linux.
+    non_standard_path = file_url[len("file://"):]
+    if non_standard_path.startswith("./") or non_standard_path.startswith(".\\"):
+        return Path(non_standard_path)
+
+    parsed = urlparse(file_url)
+    if parsed.scheme != "file":
+        return None
+    if parsed.netloc and parsed.netloc != "localhost":
+        raw_path = f"//{parsed.netloc}{parsed.path}"
+    else:
+        raw_path = parsed.path
+    local_path = url2pathname(unquote(raw_path))
+    return Path(local_path)
+
+
+def _is_valid_http_url(url_value):
+    parsed = urlparse(url_value)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 # Validate that required arguments are provided
 if args.mime is None:
@@ -92,27 +125,56 @@ if args.mime is None:
     if args.pdf is None:
         parser.error("PDF URL is required. Provide --pdf argument or create a .config/Test.pdf file")
 
+if not _is_valid_http_url(args.url):
+    _fail(f"Invalid PRISMAsync URL: {args.url}. Use http://<host>:<port> or https://<host>:<port>")
+
+if args.mime is None:
+    jmf_path = Path(args.jmf)
+    if not jmf_path.is_file():
+        _fail(f"JMF file not found: {jmf_path}")
+
+    jdf_path = Path(args.jdf)
+    if not jdf_path.is_file():
+        _fail(f"JDF file not found: {jdf_path}")
+
 # Perform sanity checks on command line arguments
 # Check if pdf argument starts with http(s):// or file://
 if args.mime is None :
     if args.pdf.startswith("http://") or args.pdf.startswith("https://") :
         pass
     elif args.pdf.startswith("file://"):
-        pass
+        pdf_path = _file_from_file_url(args.pdf)
+        if pdf_path is None or not pdf_path.is_file():
+            _fail(f"PDF file not found: {args.pdf}")
+        # Convert file:// URL back to plain file path for library compatibility
+        args.pdf = pdf_path.as_posix()
     else:
-        print("Cannot send: PDF URL must start with http://, https:// or file://")
-        exit()
+        pdf_path = Path(args.pdf)
+        if not pdf_path.is_file():
+            _fail("PDF must be an http(s) URL, file:// URL, or an existing local file path")
+        # Convert Windows paths to forward slashes for library compatibility
+        args.pdf = pdf_path.as_posix()
 else :
     # Check if mime filename argument does exist
     if Path(args.mime).is_file():
         pass
     else:
-        print(f"Cannot send: Mime package does not exist\n{args.mime}")
-        exit()
+        _fail(f"MIME package not found: {args.mime}")
 # First check if mime argument is given, if yes, send mine , else send JDF and PDF
-if args.mime is None :
-    QueueEntryID=SendJob(args.url, args.pdf, args.jdf)
-else :
-    QueueEntryID=SendMime(args.url, args.mime)
+try:
+    if args.mime is None:
+        QueueEntryID = SendJob(args.url, args.pdf, args.jdf)
+    else:
+        QueueEntryID = SendMime(args.url, args.mime)
+except FileNotFoundError as err:
+    _fail(f"Input file not found: {err.filename}", exit_code=1)
+except PermissionError as err:
+    _fail(f"Permission denied while reading input file: {err}", exit_code=1)
+except ConnectionError as err:
+    _fail(f"Network connection error while sending job: {err}", exit_code=1)
+except TimeoutError as err:
+    _fail(f"Timeout while sending job: {err}", exit_code=1)
+except Exception as err:
+    _fail(f"Failed to submit job: {err}", exit_code=1)
 if not args.silent :
     print("Job submitted, got QueueEntryID: ", QueueEntryID)
