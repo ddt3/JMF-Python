@@ -6,6 +6,7 @@ Builds specified tools using PyInstaller.
 """
 
 import os
+import re
 import sys
 import subprocess
 import shutil
@@ -22,6 +23,56 @@ TOOLS = [
     'CreateTestPDF',
     'SetupConfig',
 ]
+
+
+def get_version():
+    """Read the version string from README.md and return (tag, (major, minor, patch))."""
+    readme = Path(__file__).resolve().parent.parent / 'README.md'
+    try:
+        first_line = readme.read_text(encoding='utf-8').splitlines()[0]
+        match = re.search(r'R(\d+)\.(\d+)\.(\d+)', first_line)
+        if match:
+            return match.group(0), tuple(int(x) for x in match.groups())
+    except Exception:
+        pass
+    return None, None
+
+
+def generate_version_info(buildspec_dir, tool, version_str, version_tuple):
+    """Write a PyInstaller version resource file for the given tool."""
+    major, minor, patch = version_tuple
+    ver_file = buildspec_dir / f'{tool}_version_info.txt'
+    content = (
+        'VSVersionInfo(\n'
+        '  ffi=FixedFileInfo(\n'
+        f'    filevers=({major}, {minor}, {patch}, 0),\n'
+        f'    prodvers=({major}, {minor}, {patch}, 0),\n'
+        '    mask=0x3f,\n'
+        '    flags=0x0,\n'
+        '    OS=0x4,\n'
+        '    fileType=0x1,\n'
+        '    subtype=0x0,\n'
+        '    date=(0, 0)\n'
+        '  ),\n'
+        '  kids=[\n'
+        '    StringFileInfo(\n'
+        '      [\n'
+        '      StringTable(\n'
+        "        u'040904B0',\n"
+        "        [StringStruct(u'CompanyName', u'Canon Production Printing'),\n"
+        f"        StringStruct(u'FileDescription', u'{tool}'),\n"
+        f"        StringStruct(u'FileVersion', u'{major}.{minor}.{patch}.0'),\n"
+        f"        StringStruct(u'InternalName', u'{tool}'),\n"
+        f"        StringStruct(u'OriginalFilename', u'{tool}.exe'),\n"
+        "        StringStruct(u'ProductName', u'JMF Python Tools'),\n"
+        f"        StringStruct(u'ProductVersion', u'{major}.{minor}.{patch}.0')])\n"
+        '      ]),\n'
+        "    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])\n"
+        '  ]\n'
+        ')\n'
+    )
+    ver_file.write_text(content, encoding='utf-8')
+    return ver_file
 
 
 def _handle_remove_readonly(func, path, exc_info):
@@ -71,7 +122,13 @@ def build_tools(tools_to_build):
     # Get the buildspec directory (where this script is located)
     buildspec_dir = Path(__file__).resolve().parent
     dist_dir = buildspec_dir / 'dist'
-    
+
+    version_str, version_tuple = get_version()
+    if version_str:
+        print(f"Version: {version_str}")
+    else:
+        print("[WARN] Could not determine version from README.md; exe file properties will not be set.")
+
     print(f"Output directory: {dist_dir}")
     
     build_results = []
@@ -84,6 +141,9 @@ def build_tools(tools_to_build):
             print(f"[ERROR] Spec file not found: {spec_file}")
             build_results.append((tool, False, f"Spec file not found"))
             continue
+
+        if version_str:
+            generate_version_info(buildspec_dir, tool, version_str, version_tuple)
         
         print(f"\n{'='*60}")
         print(f"Building {tool}...")

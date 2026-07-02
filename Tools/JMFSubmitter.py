@@ -95,10 +95,12 @@ def _file_from_file_url(file_url):
     if not file_url.startswith("file://"):
         return None
 
-    # Accept common non-standard relative forms like file://./path or file://.\path.
-    # This keeps CLI behavior user-friendly on both Windows and Linux.
+    # Accept common non-standard relative forms like file://./path, file://.\path,
+    # file://.config/path, or file://.config\path.
+    # Well-formed file URLs always have an absolute path starting with '/' after the authority;
+    # anything starting with '.' is a relative path used non-standardly.
     non_standard_path = file_url[len("file://"):]
-    if non_standard_path.startswith("./") or non_standard_path.startswith(".\\"):
+    if non_standard_path.startswith("."):
         return Path(non_standard_path)
 
     parsed = urlparse(file_url)
@@ -146,8 +148,10 @@ if args.mime is None :
         pdf_path = _file_from_file_url(args.pdf)
         if pdf_path is None or not pdf_path.is_file():
             _fail(f"PDF file not found: {args.pdf}")
-        # Convert file:// URL back to plain file path for library compatibility
-        args.pdf = pdf_path.as_posix()
+        # Resolve to an absolute path but keep the file:// prefix intact — the library
+        # uses the presence of "file://" to decide whether to embed the PDF as a
+        # base64 MIME part or reference it by URL.
+        args.pdf = "file://" + pdf_path.resolve().as_posix()
     else:
         pdf_path = Path(args.pdf)
         if not pdf_path.is_file():

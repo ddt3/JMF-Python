@@ -1,4 +1,4 @@
-# Python Examples R1.2
+# Python Examples R1.2.1
 ## Introduction
 These files have been created to serve as examples of how JMF/JDF can be used to manage jobs on PRISMAsync. These files are provided "as is". This means that e.g. performance, error handling, input validation have not been a priority.  The examples have been written in Python3 because of the readability and availability of this language.
 
@@ -67,6 +67,10 @@ Before using these examples:
 * Make sure to replace the current printer url ( http://PRISMAsync.cpp.canon:8010 ) in some of the examples to the address of your PRISMAsync.
 
 ## Change history
+### 1.2.1
+* Improved input handling: "File not found" instead of cryptic python errors 
+* Added an argument to CreateMimepackage command line: --output to specify output filename of mjm
+* Added version information to the exe files
 ### 1.2.0
 * Based on module prismasyncjmfjdf a number of tools have been created for stand-alone use.<br>
 Tools are available as python scripts and .exe files (scripts can serve as further examples for use of prismasyncjmfjdf)

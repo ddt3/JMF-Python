@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false
-        },        
+        },
         {
             "name": "Python: JDF",
             "type": "python",
@@ -76,17 +76,37 @@
             "justMyCode": true
         },
         {
-            "name": "Python: fat-cep-620",
-            "type": "python",
+            "name": "Python: Provide arguments",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "args": [
-                "--url",
-                "http://fat-cep-620.ocevenlo.oce.net:8010",
-                "--inc"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true
+                "${input:arguments}"
+            ]
         }
-    ]
+    ],
+    "inputs": [
+        {
+            "id": "arguments",
+            "type": "promptString",
+            "description": "provide arguments"
+        }
+    ],
+    "console": "integratedTerminal",
+    "justMyCode": true
+},
+{
+    "name": "Python: fat-cep-620",
+    "type": "python",
+    "request": "launch",
+    "program": "${file}",
+    "args": [
+        "--url",
+        "http://fat-cep-620.ocevenlo.oce.net:8010",
+        "--inc"
+    ],
+    "console": "integratedTerminal",
+    "justMyCode": true
+}
+]
 }
