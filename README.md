@@ -48,6 +48,14 @@ OR, when behind a proxy use e.g.:
 
 ```python -m pip install -r requirements.txt --proxy http://proxy.server.net:81```
 
+### Local development against prismasyncjmfjdf
+If you are developing the sibling prismasyncjmfjdf repository and want JMF-Python to use that local checkout, install the released requirements first and then the local overlay:
+
+```python -m pip install -r requirements.txt```
+```python -m pip install -r requirements-local.txt```
+
+The local overlay uses an editable install of the sibling repository, so changes in prismasyncjmfjdf are picked up immediately while JMF-Python continues to use the released dependency by default.
+
 ### Check installation
 If everything is working properly, you should be able to run the following command:
 
