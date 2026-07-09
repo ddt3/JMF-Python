@@ -1,3 +1,5 @@
+-f https://ddt3.github.io/prismasyncjmfjdf/simple/prismasyncjmfjdf/
+
 base64io
 certifi
 chardet
@@ -8,4 +10,4 @@ tk
 numpy
 pyperclip
 fpdf2
-prismasyncjmfjdf @ https://github.com/ddt3/prismasyncjmfjdf/releases/latest/download/prismasyncjmfjdf.tar.gz
+prismasyncjmfjdf 

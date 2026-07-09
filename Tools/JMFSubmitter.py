@@ -83,6 +83,8 @@ parser.add_argument('--silent', '-s', action='store_true',
                     help='Do not print ID just submit and stay silent')
 parser.add_argument('--mime', '-m', type=str, default=None,
                     help='Mime package to send, takes priority over all other settings (default: no mime package)')
+parser.add_argument('--chunksize', '-c', type=str, default=0,
+                    help='Chunk size for uploading mime package in bytes (default: 0, which means no chunking)\n Sizes can be specified in bytes, kilobytes (e.g., 10k), megabytes (e.g., 5M), or gigabytes (e.g., 1G).')
 args = parser.parse_args()
 
 
@@ -140,6 +142,17 @@ if args.mime is None:
         _fail(f"JDF file not found: {jdf_path}")
 
 # Perform sanity checks on command line arguments
+# First translate chunk size argument to an integer as it can contain K, M, or G suffixes, if it is not zero or negative, then fail
+if isinstance(args.chunksize, str):
+    suffix_multipliers = {"K": 1024, "M": 1048576, "G": 1073741824}
+    if args.chunksize[-1].upper() in suffix_multipliers:
+        args.chunksize = int(args.chunksize[:-1]) * suffix_multipliers[args.chunksize[-1].upper()]
+    else:
+        args.chunksize = int(args.chunksize)
+
+if args.chunksize < 0:
+    _fail("Chunk size must be a non-negative integer")
+
 # Check if pdf argument starts with http(s):// or file://
 if args.mime is None :
     if args.pdf.startswith("http://") or args.pdf.startswith("https://") :
@@ -169,7 +182,10 @@ try:
     if args.mime is None:
         QueueEntryID = SendJob(args.url, args.pdf, args.jdf)
     else:
-        QueueEntryID = SendMime(args.url, args.mime)
+        # If chunksize is zero do not chunk, else use the provided chunksize 
+        chunk_size = args.chunksize if args.chunksize > 0 else 0
+        chunked_upload = True if args.chunksize > 0 else False
+        QueueEntryID = SendMime(args.url, args.mime, chunked_upload=chunked_upload, chunk_size=chunk_size)
 except FileNotFoundError as err:
     _fail(f"Input file not found: {err.filename}", exit_code=1)
 except PermissionError as err:
