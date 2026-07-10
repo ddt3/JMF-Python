@@ -44,19 +44,7 @@ jobs:
         run: python -m pip install markdown
       
       - name: Convert README to HTML
-        run: |
-          python -c "
-          import markdown
-          from pathlib import Path
-          md = Path('Tools/README.md').read_text(encoding='utf-8')
-          body = markdown.markdown(md, extensions=['tables'])
-          html = f'''<!DOCTYPE html>
-          <html lang=\"en\"><head><meta charset=\"UTF-8\">
-          <title>JMF Tools</title>
-          <style>body{{font-family:sans-serif;max-width:900px;margin:2em auto;padding:0 1em}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px 10px}}th{{background:#f0f0f0}}code{{background:#f4f4f4;padding:2px 4px;border-radius:3px}}pre{{background:#f4f4f4;padding:1em;overflow-x:auto}}</style>
-          </head><body>{body}</body></html>'''
-          Path('buildspec/dist/JMF-Tools-README.html').write_text(html, encoding='utf-8')
-          "
+        run: python buildspec/readme_to_html.py
       
       - name: Create release zip
         id: zip
