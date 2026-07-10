@@ -50,7 +50,7 @@ jobs:
         id: zip
         run: |
           cd buildspec/dist
-          $zipName = "JMF-Python-${{ steps.version.outputs.version }}.zip"
+          $zipName = "JMF-Python-Tools-${{ steps.version.outputs.version }}.zip"
           Compress-Archive -Path *.exe, JMF-Tools-README.html -DestinationPath $zipName
           echo "ZIP_FILE=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
       
