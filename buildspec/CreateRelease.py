@@ -73,6 +73,28 @@ def generate_version_info(tool, version_str, version_tuple):
     return content
 
 
+def update_readme_version(buildspec_dir, version_str, dry_run=False):
+    """Update the version heading in Tools/README.md."""
+    readme = buildspec_dir.parent / 'Tools' / 'README.md'
+    if not readme.exists():
+        print(f"[WARN] Tools/README.md not found: {readme}")
+        return False
+
+    content = readme.read_text(encoding='utf-8')
+    new_content = re.sub(r'^(# JMF Tools) R\d+\.\d+\.\d+', f'\\1 {version_str}', content, count=1, flags=re.MULTILINE)
+
+    if new_content == content:
+        print(f"[WARN] Version heading not found or already up to date in Tools/README.md")
+        return False
+
+    if dry_run:
+        print(f"[DRY-RUN] Would update: Tools/README.md")
+    else:
+        readme.write_text(new_content, encoding='utf-8')
+        print(f"[OK] Updated: Tools/README.md ({version_str})")
+    return True
+
+
 def update_version_files(buildspec_dir, version_str, version_tuple, dry_run=False):
     """Update all version files with the new version."""
     version_files = get_version_files(buildspec_dir)
@@ -106,28 +128,42 @@ def update_version_files(buildspec_dir, version_str, version_tuple, dry_run=Fals
 def list_version_files(buildspec_dir):
     """List all version files and their current content."""
     version_files = get_version_files(buildspec_dir)
-    
-    if not version_files:
-        print("[WARN] No version files found")
-        return
-    
-    print("\nVersion files in buildspec:")
+
+    print("\nVersion files:")
     print("=" * 60)
-    
-    for ver_file in version_files:
-        tool = ver_file.stem.replace('_version_info', '')
-        print(f"\n  File: {ver_file.name}")
-        print(f"  Tool: {tool}")
-        
-        # Extract version from file content
+
+    # Show Tools/README.md first as source-of-truth follower
+    tools_readme = buildspec_dir.parent / 'Tools' / 'README.md'
+    print(f"\n  File: Tools/README.md")
+    if tools_readme.exists():
         try:
-            content = ver_file.read_text(encoding='utf-8')
-            match = re.search(r"FileVersion', u'(\d+\.\d+\.\d+)", content)
+            content = tools_readme.read_text(encoding='utf-8')
+            match = re.search(r'^# JMF Tools (R\d+\.\d+\.\d+)', content, re.MULTILINE)
             if match:
                 print(f"  Current Version: {match.group(1)}")
+            else:
+                print(f"  Current Version: (not found)")
         except Exception as e:
             print(f"  Error reading: {e}")
-    
+    else:
+        print(f"  (file not found)")
+
+    if not version_files:
+        print("\n[WARN] No version info files found")
+    else:
+        for ver_file in version_files:
+            tool = ver_file.stem.replace('_version_info', '')
+            print(f"\n  File: {ver_file.name}")
+            print(f"  Tool: {tool}")
+
+            try:
+                content = ver_file.read_text(encoding='utf-8')
+                match = re.search(r"FileVersion', u'(\d+\.\d+\.\d+)", content)
+                if match:
+                    print(f"  Current Version: {match.group(1)}")
+            except Exception as e:
+                print(f"  Error reading: {e}")
+
     print("\n" + "=" * 60)
 
 
@@ -178,14 +214,15 @@ def main():
     
     if args.dry_run or args.update:
         updated = update_version_files(buildspec_dir, version_str, version_tuple, dry_run=args.dry_run)
+        update_readme_version(buildspec_dir, version_str, dry_run=args.dry_run)
         
         print()
         print("=" * 60)
         if args.dry_run:
-            print(f"[DRY-RUN] Would update {updated} version file(s)")
+            print(f"[DRY-RUN] Would update {updated} version file(s) and Tools/README.md")
             print("Run with --update to apply changes")
         else:
-            print(f"[OK] Updated {updated} version file(s)")
+            print(f"[OK] Updated {updated} version file(s) and Tools/README.md")
         print("=" * 60)
         
         return 0
