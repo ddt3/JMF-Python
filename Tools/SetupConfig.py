@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 SetupConfig creates and populates a .config folder with default files
-for JMF tools: SubmitQueueEntry.jmf, Template.jdf, and Test.pdf
+for JMF tools: SubmitQueueEntry.jmf, QueueStatus.jmf, RemoveQueueEntry.jmf,
+Template.jdf, and Test.pdf
 """
 import sys
 import argparse
 from pathlib import Path
-from CreateTestPDF import create_test_pdf
 
 
 def get_tools_dir():
@@ -106,6 +106,24 @@ TEMPLATE_JDF_CONTENT = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 </JDF>
 """
 
+# Default QueueStatus.jmf content
+QUEUESTATUS_JMF_CONTENT = """<?xml version="1.0" encoding="UTF-8"?>
+<JMF xmlns="http://www.CIP4.org/JDFSchema_1_1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" MaxVersion="1.3" SenderID="Python by hdok" TimeStamp="2020-08-30T11:39:00+02:00" Version="1.3" xsi:type="JMFRootMessage">
+      <Query ID="Completed-12345" Type="QueueStatus" xsi:type="QueryQueueStatus">
+        <QueueFilter StatusList="STATUS"/>
+    </Query>
+</JMF>
+"""
+
+# Default RemoveQueueEntry.jmf content
+REMOVEQUEUEENTRY_JMF_CONTENT = """<?xml version="1.0" encoding="UTF-8"?>
+<JMF xmlns="http://www.CIP4.org/JDFSchema_1_1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" SenderID="Python by hdok" TimeStamp="2020-08-30T16:12:32+02:00" Version="1.3">
+    <Command ID="PYTHON_IZAEIP_195_20190830161232" Type="RemoveQueueEntry" xsi:type="CommandRemoveQueueEntry">
+        <QueueEntryDef QueueEntryID="QUEUEENTRY" />
+    </Command>
+</JMF>
+"""
+
 
 def confirm_overwrite(file_path):
     """Ask user for confirmation before overwriting a file."""
@@ -124,6 +142,37 @@ def confirm_overwrite(file_path):
     return True
 
 
+def verify_config(config_dir):
+    """Verify all required files exist in .config without modifying anything."""
+    required_files = [
+        "SubmitQueueEntry.jmf",
+        "QueueStatus.jmf",
+        "RemoveQueueEntry.jmf",
+        "Template.jdf",
+        "Test.pdf",
+    ]
+
+    print(f"[INFO] Verifying .config directory: {config_dir}")
+
+    all_present = True
+    for file_name in required_files:
+        file_path = config_dir / file_name
+        if file_path.is_file():
+            print(f"[OK] Found {file_name}")
+        else:
+            print(f"[MISSING] {file_name}")
+            all_present = False
+
+    print(f"\n{'='*60}")
+    if all_present:
+        print("[OK] Verification complete: all required .config files are present")
+    else:
+        print("[ERROR] Verification complete: one or more required .config files are missing")
+    print(f"Config folder: {config_dir}")
+    print(f"{'='*60}")
+    return all_present
+
+
 def setup_config():
     """Create and populate .config folder with default files."""
     # Create .config in the tools directory
@@ -134,34 +183,30 @@ def setup_config():
     config_dir.mkdir(parents=True, exist_ok=True)
     print(f"[OK] Created/verified .config directory: {config_dir}\n")
     
-    # Write SubmitQueueEntry.jmf
-    jmf_target = config_dir / 'SubmitQueueEntry.jmf'
-    if confirm_overwrite(jmf_target):
-        try:
-            with open(jmf_target, 'w', encoding='utf-8') as f:
-                f.write(SUBMIT_JMF_CONTENT)
-            print(f"[OK] Created SubmitQueueEntry.jmf")
-        except Exception as e:
-            print(f"[ERROR] Failed to create SubmitQueueEntry.jmf: {e}")
-    else:
-        print(f"[SKIP] Skipped SubmitQueueEntry.jmf")
-    
-    # Write Template.jdf
-    jdf_target = config_dir / 'Template.jdf'
-    if confirm_overwrite(jdf_target):
-        try:
-            with open(jdf_target, 'w', encoding='utf-8') as f:
-                f.write(TEMPLATE_JDF_CONTENT)
-            print(f"[OK] Created Template.jdf")
-        except Exception as e:
-            print(f"[ERROR] Failed to create Template.jdf: {e}")
-    else:
-        print(f"[SKIP] Skipped Template.jdf")
+    text_files = [
+        ("SubmitQueueEntry.jmf", SUBMIT_JMF_CONTENT),
+        ("QueueStatus.jmf", QUEUESTATUS_JMF_CONTENT),
+        ("RemoveQueueEntry.jmf", REMOVEQUEUEENTRY_JMF_CONTENT),
+        ("Template.jdf", TEMPLATE_JDF_CONTENT),
+    ]
+
+    for file_name, file_content in text_files:
+        target = config_dir / file_name
+        if confirm_overwrite(target):
+            try:
+                with open(target, 'w', encoding='utf-8') as f:
+                    f.write(file_content)
+                print(f"[OK] Created {file_name}")
+            except Exception as e:
+                print(f"[ERROR] Failed to create {file_name}: {e}")
+        else:
+            print(f"[SKIP] Skipped {file_name}")
     
     # Create Test.pdf
     pdf_target = config_dir / 'Test.pdf'
     if confirm_overwrite(pdf_target):
         try:
+            from CreateTestPDF import create_test_pdf
             print(f"\nCreating Test.pdf...")
             create_test_pdf(
                 pdf_target,
@@ -183,15 +228,27 @@ def setup_config():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="SetupConfig creates and populates a .config folder with default files for JMF tools.",
-        epilog="This tool creates three files in a .config directory:\n"
+         epilog="This tool creates the following files in a .config directory:\n"
                "  • SubmitQueueEntry.jmf - Default JMF command template\n"
+             "  • QueueStatus.jmf - Default JMF query template for queue status\n"
+             "  • RemoveQueueEntry.jmf - Default JMF command template to remove jobs\n"
                "  • Template.jdf - Default JDF job ticket template\n"
                "  • Test.pdf - Sample test PDF for JMF processing\n\n"
                "If files already exist, you will be prompted before overwriting them.",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    parser.add_argument(
+        "--verify",
+        action="store_true",
+        help="Only verify that required .config files exist; do not create or modify files",
+    )
     args = parser.parse_args()
     try:
+        if args.verify:
+            tools_dir = get_tools_dir()
+            config_dir = tools_dir / '.config'
+            ok = verify_config(config_dir)
+            sys.exit(0 if ok else 1)
         setup_config()
     except PermissionError as err:
         print(f"Error: Permission denied while writing config files: {err}")

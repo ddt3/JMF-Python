@@ -14,11 +14,11 @@ JOBSTATETOREMOVE = "Aborted"
 # The following block is used to take command line options for this tool.
 # It needs a printer address and an  opional --status. --help is automatically generated
 parser = argparse.ArgumentParser(description='Remove all JMF QueueEntries with the provided status from PRISMAsync.')
-parser.add_argument('--url', type=str, default=PRISMASYNCADDRESS,
+parser.add_argument('--url', '-u', type=str, default=PRISMASYNCADDRESS,
                     help='Full url to PRISMAsync jmf interface. (default: '+PRISMASYNCADDRESS+')')
 parser.add_argument('--status', '-s', type=str, default=JOBSTATETOREMOVE,
                     help='Status of the jobs that need to be removed. \nTo remove all QueueEntries use: \" \"  To remove multiple statuses use: \"Aborted Completed\"')
-parser.add_argument('--id', '-i', type=str, 
+parser.add_argument('--id', '--queue-entry-id', '-i', type=str, 
                     help='\nA QueuEntryID of a single job')
 args = parser.parse_args()
 

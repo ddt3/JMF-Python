@@ -71,7 +71,7 @@ if configpath.exists():
 
 # The following block is used to take command line options for this tool.
 parser = argparse.ArgumentParser(description='Submit JMF, JDF, and PDF to PRISMAsync. Create a .config folder to add defaults for: SubmitQueueEntry.jmf, Template.jdf, and Test.pdf')
-parser.add_argument('--url', type=str, default=PRISMASYNCADDRESS,
+parser.add_argument('--url', '-u', type=str, default=PRISMASYNCADDRESS,
                     help=f'full url to PRISMAsync jmf interface (default: {PRISMASYNCADDRESS})')
 parser.add_argument('--jmf', '-j', type=str, default=SUBMITJMF,
                     help=f'Provide filename for JMF messages used for submission (default: {SUBMITJMF})')
@@ -83,7 +83,7 @@ parser.add_argument('--silent', '-s', action='store_true',
                     help='Do not print ID just submit and stay silent')
 parser.add_argument('--mime', '-m', type=str, default=None,
                     help='Mime package to send, takes priority over all other settings (default: no mime package)')
-parser.add_argument('--chunksize', '-c', type=str, default=0,
+parser.add_argument('--chunksize', '--chunk-size', '-c', type=str, default=0,
                     help='Chunk size for uploading mime package in bytes (default: 0, which means no chunking)\n Sizes can be specified in bytes, kilobytes (e.g., 10k), megabytes (e.g., 5M), or gigabytes (e.g., 1G).')
 args = parser.parse_args()
 
