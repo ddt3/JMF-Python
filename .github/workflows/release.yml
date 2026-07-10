@@ -29,6 +29,7 @@ jobs:
       
       - name: Build tools
         run: |
+          python -m pip install pyinstaller
           cd buildspec
           python build_tools.py all
       
