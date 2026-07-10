@@ -76,8 +76,11 @@ Before using these examples:
 
 ## Change history
 ### 1.2.1
+* Bugfix: SetupConfig: not all needed config files were created
 * Improved input handling: "File not found" instead of cryptic python errors 
 * Added an argument to CreateMimepackage command line: --output to specify output filename of mjm
+* Added Chunked upload to JMFSubmitter and improved larger file handling
+* Unified command line arguments for all tools
 * Added version information to the exe files
 ### 1.2.0
 * Based on module prismasyncjmfjdf a number of tools have been created for stand-alone use.<br>
